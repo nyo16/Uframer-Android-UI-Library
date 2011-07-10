@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<resources>
+	<!-- common attributes -->
+	<attr name="title" format="string"/>
+	<attr name="titleColor" format="color"/>
+	<attr name="icon" format="reference"/>
+	<!-- custom header must be the first child -->
+	<attr name="customHeader" format="reference"/>
+
+ 	<declare-styleable name="PanoramaView">
+		<attr name="title"/>
+		<attr name="titleColor"/>
+		<attr name="icon"/>
+		<attr name="customHeader"/>
+	</declare-styleable>
+	<declare-styleable name="PanoramaSection">
+		<attr name="title"/>
+		<attr name="titleColor"/>
+		<attr name="icon"/>
+		<attr name="customHeader"/>
+	</declare-styleable>
+	<declare-styleable name="MirageView">
+		<attr name="cloneView" format="reference"/>
+	</declare-styleable>
+</resources>
