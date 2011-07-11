@@ -321,9 +321,9 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
 			View v = mSectionTitleMirage.getView();
 			final int left = v.getLeft() + ((View) v.getParent()).getLeft();
 			final int top = v.getTop() + ((View) v.getParent()).getTop();
-			mSectionTitleMirage.layout(left + viewportOffsetX, 
+			mSectionTitleMirage.layout(left, 
 									   top,
-									   left + mSectionTitleMirage.getMeasuredWidth() + viewportOffsetX,
+									   left + mSectionTitleMirage.getMeasuredWidth(),
 									   top + mSectionTitleMirage.getMeasuredHeight());
 		}
 	}
