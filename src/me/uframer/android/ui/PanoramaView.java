@@ -295,21 +295,25 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
 		final int headerHeight = mHeader.getMeasuredHeight();
 		final int backgroundWidth = mBackground.getMeasuredWidth();
 		final int backgroundHeight = mBackground.getMeasuredHeight();
+		int viewportOffsetX;
 
 		// 1. layout background layer
 		if (mBackground != null) {
-			mBackground.layout(0, 0, backgroundWidth, backgroundHeight);
+			viewportOffsetX = -mViewportLeft * (backgroundWidth - panoramaWidth) / (contentWidth + DEFAULT_PEEKING_WIDTH - panoramaWidth);
+			mBackground.layout(viewportOffsetX, 0, backgroundWidth + viewportOffsetX, backgroundHeight);
 		}
 		
-		// 2. layout header panel
-		mHeader.layout(0, 0, headerWidth, headerHeight);
+		// 2. layout header
+		viewportOffsetX = -mViewportLeft * (headerWidth - panoramaWidth) / (contentWidth - panoramaWidth);
+		mHeader.layout(viewportOffsetX, 0, headerWidth + viewportOffsetX, headerHeight);
 		
 		// 3. layout sections
-		int offsetX = 0;
+		int sectionOffsetX = 0;
+		viewportOffsetX = -mViewportLeft;
 		for (PanoramaSection ps : mSectionList) {
 			final int childWidth = ps.getMeasuredWidth();
-			ps.layout(offsetX, headerHeight, childWidth + offsetX, ps.getMeasuredHeight() + headerHeight);
-			offsetX += childWidth;
+			ps.layout(sectionOffsetX + viewportOffsetX, headerHeight, childWidth + sectionOffsetX + viewportOffsetX, ps.getMeasuredHeight() + headerHeight);
+			sectionOffsetX += childWidth;
 		}
 		
 		// 4. layout mirages
@@ -317,7 +321,10 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
 			View v = mSectionTitleMirage.getView();
 			final int left = v.getLeft() + ((View) v.getParent()).getLeft();
 			final int top = v.getTop() + ((View) v.getParent()).getTop();
-			mSectionTitleMirage.layout(left, top, left + mSectionTitleMirage.getMeasuredWidth(), top + mSectionTitleMirage.getMeasuredHeight());
+			mSectionTitleMirage.layout(left + viewportOffsetX, 
+									   top,
+									   left + mSectionTitleMirage.getMeasuredWidth() + viewportOffsetX,
+									   top + mSectionTitleMirage.getMeasuredHeight());
 		}
 	}
 
