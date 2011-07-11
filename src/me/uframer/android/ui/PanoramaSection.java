@@ -47,23 +47,23 @@ public class PanoramaSection extends ViewGroup {
 
 	public PanoramaSection(Context context) {
 		super(context);
-		initializePanoramaItem(context, null, 0);
+		initializePanoramaSection(context, null, 0);
 	}
 
 	public PanoramaSection(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		initializePanoramaItem(context, attrs, 0);
+		initializePanoramaSection(context, attrs, 0);
 	}
 
 	public PanoramaSection(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
-		initializePanoramaItem(context, attrs, defStyle);
+		initializePanoramaSection(context, attrs, defStyle);
 	}
 
 	/**
 	 * initialize PanoramaSection internally
 	 */
-	private void initializePanoramaItem(Context context, AttributeSet attrs, int defStyle) {
+	private void initializePanoramaSection(Context context, AttributeSet attrs, int defStyle) {
 		if (attrs != null) {
 			TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.PanoramaSection, defStyle, 0);
 			mCustomHeaderId = ta.getResourceId(R.styleable.PanoramaSection_customHeader, -1);
@@ -161,7 +161,6 @@ public class PanoramaSection extends ViewGroup {
 
 	@Override
 	protected void onLayout(boolean changed, int l, int t, int r, int b) {
-		Log.v(LOG_TAG, "left padding is " + Integer.toString(getPaddingLeft()));
 		mHeader.layout(getPaddingLeft(), getPaddingTop(), mHeader.getMeasuredWidth() + getPaddingLeft(), mHeader.getMeasuredHeight() + getPaddingTop());
 		int offsetY = mHeader.getMeasuredHeight() + getPaddingTop();
 		if (mContent != null) {
