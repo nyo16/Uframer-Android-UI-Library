@@ -118,7 +118,6 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
 
 	private float mLastMotionX;
 	private float mLastMotionY;
-	private float mCurrentViewPortLeft;
 
 	private FlipOutAnimation mPanoramaTitleAnimation;
 	private FlipOutAnimation mSectionTitleAnimation;
@@ -696,32 +695,6 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
 		}, 300);
 	}
 	
-	// FIXME concepts
-	void concepts() {
-		// view port width
-		final int panoramaWidth = getWidth();
-		// sum of widths of all PanoramaItems
-		final int contentWidth = getContentWidth();
-		// header width
-		final int headerWidth = mHeader.getMeasuredWidth();
-		// background width
-		final int backgroundWidth = mBackgroundDrawable.getIntrinsicWidth();
-		// viewportLeft <= contentWidth - panoramaWidth && viewportLeft >= 0
-		int viewportLeft = 0;
-		
-		// first, let us assume this: headerWidth <= backgroundWidth <= contentWidth
-		if (headerWidth < panoramaWidth && contentWidth < panoramaWidth) {
-			// NO SCROLLING
-		}
-		else if (headerWidth <= backgroundWidth && backgroundWidth <= contentWidth) {
-			int backgroundLeft = -(viewportLeft * (backgroundWidth - panoramaWidth) / (contentWidth - panoramaWidth));
-			int headerLeft = -(viewportLeft * (headerWidth - panoramaWidth) / (contentWidth - panoramaWidth));
-		}
-		else {
-			// TODO
-		}
-	}
-
 	// =================================== scrolling ======================================
 	@Override
 	public void scrollTo(int x, int y) {
