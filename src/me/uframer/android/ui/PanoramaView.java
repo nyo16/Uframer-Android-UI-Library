@@ -129,6 +129,9 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
 	private MirageView mLastSectionMirage;
 	private MirageView mFirstSectionMirage;
 	
+	private int mLastWidthMeasureSpec;
+	private int mLastHeightMeasureSpec;
+
 	private ArrayList<PanoramaSection> mSectionList;
 
 	private DisplayMetrics mDisplayMetrics;
@@ -350,6 +353,9 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
 
     @Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    	// save measure specs for mirages
+    	mLastWidthMeasureSpec = widthMeasureSpec;
+    	mLastHeightMeasureSpec = heightMeasureSpec;
 		// the metrics of PanoramaView has no relation with its children
 		final int widthMode = MeasureSpec.getMode(widthMeasureSpec);
 		final int heightMode = MeasureSpec.getMode(heightMeasureSpec);
@@ -677,7 +683,9 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
 			removeView(mSectionTitleMirage);
 		}
 		mSectionTitleMirage = mv;
-		this.addView(mSectionTitleMirage);
+		addView(mSectionTitleMirage);
+		// make sure the original view is measured
+		measure(mLastWidthMeasureSpec, mLastHeightMeasureSpec);
 		mSectionTitleMirage.freeze();
 		mSectionTitleMirage.getView().setVisibility(GONE);
 		mHeader.startAnimation(panoramaTitleAnimation);
