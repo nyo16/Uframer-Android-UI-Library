@@ -226,12 +226,9 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
         mBackgroundDrawable = getBackground();
         setBackgroundDrawable(null);
 
-        // FIXME
+        // generate background
         if (mBackgroundDrawable != null) {
             generateBackground();
-        }
-        else {
-            throw new Error("FIXME: add support for null background");
         }
     }
 
