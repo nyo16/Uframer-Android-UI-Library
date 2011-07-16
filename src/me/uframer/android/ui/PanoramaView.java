@@ -570,8 +570,19 @@ public class PanoramaView extends ViewGroup {
 
                     if (canScroll) {
                         if ((Math.abs(initialVelocity) > mMinimumVelocity)) {
-                            // TODO trigger animation
-                            fling(initialVelocity);
+                            PanoramaSection ps = null;
+                            if (initialVelocity < 0) {
+                                ps = findNextSection();
+                                if (ps != null) {
+                                    fling(initialVelocity, getScrollX(), ps.getLeft());
+                                }
+                            }
+                            else { // initialVelocity < 0, we have ruled out 0 in outer conditional-expression
+                                ps = findPreviousSection();
+                                if (ps != null) {
+                                    fling(initialVelocity, ps.getLeft(), getScrollX());
+                                }
+                            }
                         } else {
                             invalidate();
                         }
@@ -658,8 +669,8 @@ public class PanoramaView extends ViewGroup {
         scrollBy(x, 0);
     }
 
-    private void fling(int velocity) {
-        mScroller.fling(getScrollX(), 0, -velocity, 0, 0, Math.max(0, getContentWidth() - getWidth() + DEFAULT_PEEKING_WIDTH), 0, 0);
+    private void fling(int velocity, int minX, int maxX) {
+        mScroller.fling(getScrollX(), 0, -velocity, 0, minX, maxX, 0, 0);
         mIsScrollingCache = mScroller.computeScrollOffset();
         mScrollingOffsetCache = mScroller.getCurrX();
         invalidate();
@@ -695,7 +706,7 @@ public class PanoramaView extends ViewGroup {
     }
 
     // TODO if we keep sections ordered then we can save half of the work
-    PanoramaSection findPreviousSection() {
+    PanoramaSection findNextSection() {
         PanoramaSection result = null;
         int minDistance = Integer.MAX_VALUE;
         final int viewportLeft = getScrollX();
@@ -709,7 +720,7 @@ public class PanoramaView extends ViewGroup {
         return result;
     }
 
-    PanoramaSection findNextSection() {
+    PanoramaSection findPreviousSection() {
         PanoramaSection result = null;
         int minDistance = Integer.MAX_VALUE;
         final int viewportLeft = getScrollX();
