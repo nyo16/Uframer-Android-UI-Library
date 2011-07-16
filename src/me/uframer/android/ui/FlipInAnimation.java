@@ -6,55 +6,55 @@ import android.view.animation.Animation;
 import android.view.animation.Transformation;
 
 public class FlipInAnimation extends Animation {
-	
-	private class Interpolator implements android.view.animation.Interpolator {
 
-		@Override
-		public float getInterpolation(float t) {
-			return (float)(1.0f - (1.0f - t) * (1.0f - t));
-		}
-	}
+    private class Interpolator implements android.view.animation.Interpolator {
 
-	private static final float FROM_DEGREES = 45.0f;
-	private static final float TO_DEGREES = 0.0f;
-	private static final float FROM_DEPTH = 100.0f;
-	private static final float TO_DEPTH = 0.0f;
-	private static final int DURATION = 500;
-	private float mPivotX;
-	private float mPivotY;
-	private Camera mCamera;
+        @Override
+        public float getInterpolation(float t) {
+            return (float)(1.0f - (1.0f - t) * (1.0f - t));
+        }
+    }
 
-	public FlipInAnimation(float pivotX, float pivotY) {		
-		mPivotX = pivotX;
-	    mPivotY = pivotY;
-		setDuration(DURATION);
-		setInterpolator(new Interpolator());
-	}
-	
-	@Override
-	public void initialize(int width, int height, int parentWidth, int parentHeight) {
-		super.initialize(width, height, parentWidth, parentHeight);
-		mCamera = new Camera();
-	}
-	
-	@Override
-	protected void applyTransformation(float interpolatedTime, Transformation t) {
+    private static final float FROM_DEGREES = 45.0f;
+    private static final float TO_DEGREES = 0.0f;
+    private static final float FROM_DEPTH = 100.0f;
+    private static final float TO_DEPTH = 0.0f;
+    private static final int DURATION = 500;
+    private float mPivotX;
+    private float mPivotY;
+    private Camera mCamera;
 
-		final float degrees = FROM_DEGREES + (TO_DEGREES - FROM_DEGREES) * interpolatedTime;
-		final float depthZ = FROM_DEPTH + (TO_DEPTH - FROM_DEPTH) * interpolatedTime;		
-		final float transparency = interpolatedTime;
+    public FlipInAnimation(float pivotX, float pivotY) {        
+        mPivotX = pivotX;
+        mPivotY = pivotY;
+        setDuration(DURATION);
+        setInterpolator(new Interpolator());
+    }
 
-		t.setAlpha(transparency);
-		Matrix matrix = t.getMatrix();
+    @Override
+    public void initialize(int width, int height, int parentWidth, int parentHeight) {
+        super.initialize(width, height, parentWidth, parentHeight);
+        mCamera = new Camera();
+    }
 
-		mCamera.save();
-		mCamera.translate(0, 0, depthZ);
-		mCamera.rotateY(degrees);
-		mCamera.getMatrix(matrix);
-		mCamera.restore();
+    @Override
+    protected void applyTransformation(float interpolatedTime, Transformation t) {
 
-		matrix.preTranslate(-mPivotX, -mPivotY);
-		matrix.postTranslate(mPivotX, mPivotY);
-	}
+        final float degrees = FROM_DEGREES + (TO_DEGREES - FROM_DEGREES) * interpolatedTime;
+        final float depthZ = FROM_DEPTH + (TO_DEPTH - FROM_DEPTH) * interpolatedTime;        
+        final float transparency = interpolatedTime;
+
+        t.setAlpha(transparency);
+        Matrix matrix = t.getMatrix();
+
+        mCamera.save();
+        mCamera.translate(0, 0, depthZ);
+        mCamera.rotateY(degrees);
+        mCamera.getMatrix(matrix);
+        mCamera.restore();
+
+        matrix.preTranslate(-mPivotX, -mPivotY);
+        matrix.postTranslate(mPivotX, mPivotY);
+    }
 
 }

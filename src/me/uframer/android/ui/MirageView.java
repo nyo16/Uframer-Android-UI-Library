@@ -24,202 +24,202 @@ import android.view.View.MeasureSpec;
  */
 class MirageView extends View {
 
-	private static final String LOG_TAG = MirageView.class.toString();
+    private static final String LOG_TAG = MirageView.class.toString();
 
-	public static enum ClippingDirection {
-		LEFT,
-		RIGHT,
-		TOP,
-		BOTTOM,
-	}
+    public static enum ClippingDirection {
+        LEFT,
+        RIGHT,
+        TOP,
+        BOTTOM,
+    }
 
-	private static enum ClippingType {
-		LEFT,
-		RIGHT,
-		TOP,
-		BOTTOM,
-		RECT,
-		NONE,
-	}
+    private static enum ClippingType {
+        LEFT,
+        RIGHT,
+        TOP,
+        BOTTOM,
+        RECT,
+        NONE,
+    }
 
-	final private View mView;
-
-// we don't support inflating from layout
-//	private int mViewId;
-	private Canvas mCanvas;
-	private Bitmap mBitmap;
-	private boolean mFrozen;
-	private Rect mClippingRect;
-	private int mClippingOffset;
-	private ClippingType mClippingType;
-
-	/**
-	 * @param context
-	 * @param view the original view
-	 */
-	public MirageView(Context context, View view) {
-		super(context);
-		mView = view;
-		mClippingType = ClippingType.NONE;
-	}
-
-	/**
-	 * @param context
-	 * @param view the original view
-	 * @param clip the clipping area
-	 */
-	public MirageView(Context context, View view, Rect clip) {
-		super(context);
-		mView = view;
-		mClippingRect = clip;
-		mClippingType = ClippingType.RECT;
-	}
-
-	/**
-	 * @param context
-	 * @param view the original view
-	 * @param direction from which edge we apply the {@offset}
-	 * @param offset the offset in pixels
-	 */
-	public MirageView(Context context, View view, ClippingDirection direction, int offset) {
-		super(context);
-		mView = view;
-		if (offset <= 0) throw new Error("offset can only be positive");
-		mClippingOffset = offset;
-		switch(direction) {
-		case LEFT:
-			mClippingType = ClippingType.LEFT;
-			break;
-		case RIGHT:
-			mClippingType = ClippingType.RIGHT;
-			break;
-		case TOP:
-			mClippingType = ClippingType.TOP;
-			break;
-		case BOTTOM:
-			mClippingType = ClippingType.BOTTOM;
-			break;
-		}
-	}
+    final private View mView;
 
 // we don't support inflating from layout
-//	/**
-//	 * @param context
-//	 * @param attrs
-//	 */
-//	public MirageView(Context context, AttributeSet attrs) {
-//		super(context, attrs);
-//		initializeMirageView(context, attrs, 0);
-//	}
-//
-//	/**
-//	 * @param context
-//	 * @param attrs
-//	 * @param defStyle
-//	 */
-//	public MirageView(Context context, AttributeSet attrs, int defStyle) {
-//		super(context, attrs, defStyle);
-//		initializeMirageView(context, attrs, defStyle);
-//	}
-//
-//
-//	private void initializeMirageView(Context context, AttributeSet attrs, int defStyle) {
-//		// parse attributes
-//		if (attrs != null) {
-//			TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.MirageView, defStyle, 0);
-//			mViewId = ta.getResourceId(R.styleable.MirageView_cloneView, 0);
-//			ta.recycle();
-//		}
-//
-//		mFrozen = false;
-//	}
-	
-	View getView() {
+//    private int mViewId;
+    private Canvas mCanvas;
+    private Bitmap mBitmap;
+    private boolean mFrozen;
+    private Rect mClippingRect;
+    private int mClippingOffset;
+    private ClippingType mClippingType;
+
+    /**
+     * @param context
+     * @param view the original view
+     */
+    public MirageView(Context context, View view) {
+        super(context);
+        mView = view;
+        mClippingType = ClippingType.NONE;
+    }
+
+    /**
+     * @param context
+     * @param view the original view
+     * @param clip the clipping area
+     */
+    public MirageView(Context context, View view, Rect clip) {
+        super(context);
+        mView = view;
+        mClippingRect = clip;
+        mClippingType = ClippingType.RECT;
+    }
+
+    /**
+     * @param context
+     * @param view the original view
+     * @param direction from which edge we apply the {@offset}
+     * @param offset the offset in pixels
+     */
+    public MirageView(Context context, View view, ClippingDirection direction, int offset) {
+        super(context);
+        mView = view;
+        if (offset <= 0) throw new Error("offset can only be positive");
+        mClippingOffset = offset;
+        switch(direction) {
+        case LEFT:
+            mClippingType = ClippingType.LEFT;
+            break;
+        case RIGHT:
+            mClippingType = ClippingType.RIGHT;
+            break;
+        case TOP:
+            mClippingType = ClippingType.TOP;
+            break;
+        case BOTTOM:
+            mClippingType = ClippingType.BOTTOM;
+            break;
+        }
+    }
+
 // we don't support inflating from layout
-//		if (mView == null) {
-//			mView = ((Activity) getContext()).findViewById(mViewId);
-//		}
-		return mView;
-	}
-	
-	@Override
-	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		if (mFrozen) {
-			setMeasuredDimension(mBitmap.getWidth(), mBitmap.getHeight());
-		}
-		else {
-			final View v = getView();
-			v.measure(widthMeasureSpec, heightMeasureSpec);
-			constructClippingRect(v.getMeasuredWidth(), v.getMeasuredHeight());
-			setMeasuredDimension(mClippingRect.width(), mClippingRect.height());
-		}
-	}
+//    /**
+//     * @param context
+//     * @param attrs
+//     */
+//    public MirageView(Context context, AttributeSet attrs) {
+//        super(context, attrs);
+//        initializeMirageView(context, attrs, 0);
+//    }
+//
+//    /**
+//     * @param context
+//     * @param attrs
+//     * @param defStyle
+//     */
+//    public MirageView(Context context, AttributeSet attrs, int defStyle) {
+//        super(context, attrs, defStyle);
+//        initializeMirageView(context, attrs, defStyle);
+//    }
+//
+//
+//    private void initializeMirageView(Context context, AttributeSet attrs, int defStyle) {
+//        // parse attributes
+//        if (attrs != null) {
+//            TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.MirageView, defStyle, 0);
+//            mViewId = ta.getResourceId(R.styleable.MirageView_cloneView, 0);
+//            ta.recycle();
+//        }
+//
+//        mFrozen = false;
+//    }
+    
+    View getView() {
+// we don't support inflating from layout
+//        if (mView == null) {
+//            mView = ((Activity) getContext()).findViewById(mViewId);
+//        }
+        return mView;
+    }
 
-	@Override
-	protected void onLayout(boolean changed, int l, int t, int r, int b) {
-		super.onLayout(changed, l, t, r, b);
-	}
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if (mFrozen) {
+            setMeasuredDimension(mBitmap.getWidth(), mBitmap.getHeight());
+        }
+        else {
+            final View v = getView();
+            v.measure(widthMeasureSpec, heightMeasureSpec);
+            constructClippingRect(v.getMeasuredWidth(), v.getMeasuredHeight());
+            setMeasuredDimension(mClippingRect.width(), mClippingRect.height());
+        }
+    }
 
-	@Override
-	protected void onDraw(Canvas canvas) {
-		if (mFrozen) {
-			canvas.drawBitmap(mBitmap, 0, 0, null);
-		}
-		else {
-			canvas.save();
-			// TODO set clipping?
-			canvas.clipRect(mClippingRect.left, mClippingRect.top, mClippingRect.right, mClippingRect.bottom);
-			// TODO test this
-			canvas.translate(mClippingRect.left, mClippingRect.top);
-			getView().draw(canvas);
-			canvas.restore();
-		}
-	}
-	
-	/*
-	 * <p>Take a snapshot of the original view and freeze the state.</p>
-	 * <p>NOTE: The original view must have been measured before you call this method.</p>
-	 */
-	public void freeze() {
-		final View v = getView();
-		constructClippingRect(v.getMeasuredWidth(), v.getMeasuredHeight());
-		mCanvas = new Canvas();
-		mBitmap = Bitmap.createBitmap(mClippingRect.width(), mClippingRect.height(), Bitmap.Config.ARGB_8888);
-		mCanvas.setBitmap(mBitmap);
-		// TODO test this
-		mCanvas.translate(-mClippingRect.left, -mClippingRect.top);
-		v.draw(mCanvas);
-		mCanvas.translate(mClippingRect.left, mClippingRect.top);
-		mFrozen = true;
-	}
-	
-	/*
-	 * <p>Release the resources.</p>
-	 */
-	public void unfreeze() {
-		mCanvas = null;
-		mBitmap.recycle();
-		mBitmap = null;
-		mFrozen = false;
-	}
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed, l, t, r, b);
+    }
 
-	private void constructClippingRect(int mw, int mh) {
-		switch (mClippingType) {
-		case LEFT:
-			mClippingRect = new Rect(0, 0, (mClippingOffset < mw ? mClippingOffset : mw), mh);
-			break;
-		case RIGHT:
-			mClippingRect = new Rect((mClippingOffset < mw ? mw - mClippingOffset : 0), 0, mw, mh);
-			break;
-		case TOP:
-			mClippingRect = new Rect(0, 0, mw, (mClippingOffset < mh ? mClippingOffset : mh));
-			break;
-		case BOTTOM:
-			mClippingRect = new Rect(0, (mClippingOffset < mh ? mh - mClippingOffset : 0), mw, mh);
-			break;
-		case NONE:
-			mClippingRect = new Rect(0, 0, mw, mh);
-			break;
-		}
-	}
+    @Override
+    protected void onDraw(Canvas canvas) {
+        if (mFrozen) {
+            canvas.drawBitmap(mBitmap, 0, 0, null);
+        }
+        else {
+            canvas.save();
+            // TODO set clipping?
+            canvas.clipRect(mClippingRect.left, mClippingRect.top, mClippingRect.right, mClippingRect.bottom);
+            // TODO test this
+            canvas.translate(mClippingRect.left, mClippingRect.top);
+            getView().draw(canvas);
+            canvas.restore();
+        }
+    }
+
+    /*
+     * <p>Take a snapshot of the original view and freeze the state.</p>
+     * <p>NOTE: The original view must have been measured before you call this method.</p>
+     */
+    public void freeze() {
+        final View v = getView();
+        constructClippingRect(v.getMeasuredWidth(), v.getMeasuredHeight());
+        mCanvas = new Canvas();
+        mBitmap = Bitmap.createBitmap(mClippingRect.width(), mClippingRect.height(), Bitmap.Config.ARGB_8888);
+        mCanvas.setBitmap(mBitmap);
+        // TODO test this
+        mCanvas.translate(-mClippingRect.left, -mClippingRect.top);
+        v.draw(mCanvas);
+        mCanvas.translate(mClippingRect.left, mClippingRect.top);
+        mFrozen = true;
+    }
+
+    /*
+     * <p>Release the resources.</p>
+     */
+    public void unfreeze() {
+        mCanvas = null;
+        mBitmap.recycle();
+        mBitmap = null;
+        mFrozen = false;
+    }
+
+    private void constructClippingRect(int mw, int mh) {
+        switch (mClippingType) {
+        case LEFT:
+            mClippingRect = new Rect(0, 0, (mClippingOffset < mw ? mClippingOffset : mw), mh);
+            break;
+        case RIGHT:
+            mClippingRect = new Rect((mClippingOffset < mw ? mw - mClippingOffset : 0), 0, mw, mh);
+            break;
+        case TOP:
+            mClippingRect = new Rect(0, 0, mw, (mClippingOffset < mh ? mClippingOffset : mh));
+            break;
+        case BOTTOM:
+            mClippingRect = new Rect(0, (mClippingOffset < mh ? mh - mClippingOffset : 0), mw, mh);
+            break;
+        case NONE:
+            mClippingRect = new Rect(0, 0, mw, mh);
+            break;
+        }
+    }
 }
