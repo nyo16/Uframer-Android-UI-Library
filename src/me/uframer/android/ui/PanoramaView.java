@@ -94,6 +94,7 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
     public static enum HeaderLayoutStyle {
         BOUNDED,
         TOWED,
+        SYNCED,
     }
 
     // header
@@ -335,6 +336,7 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
         case TOWED:
             viewportOffsetX = viewportLeft * (contentWidth - viewportWidth + DEFAULT_PEEKING_WIDTH / 2) / contentWidth;
             break;
+        case SYNCED:
         default:
             viewportOffsetX = 0;
         }
