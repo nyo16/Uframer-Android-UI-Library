@@ -45,7 +45,7 @@ import android.widget.TextView;
  *
  * @author jiaoye
  */
-public class PanoramaView extends ViewGroup implements AnimationListener {
+public class PanoramaView extends ViewGroup {
 
     private static final String LOG_TAG = PanoramaView.class.toString();
 
@@ -129,13 +129,10 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
     private float mLastMotionX;
     private float mLastMotionY;
 
-    private FlipOutAnimation mPanoramaTitleAnimation;
-    private FlipOutAnimation mSectionTitleAnimation;
-    private FlipOutAnimation mContentAnimation;
-
     // mirage views are all lazy
     private MirageView mHeaderMirage;
-    private MirageView mSectionTitleMirage;
+    private MirageView mPreviousSectionHeaderMirage;
+    private MirageView mNextSectionHeaderMirage;
     private MirageView mLastSectionMirage;
     private MirageView mFirstSectionMirage;
 
@@ -358,15 +355,6 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
         }
 
         // 4. layout mirages
-        if (mSectionTitleMirage != null) {
-            View v = mSectionTitleMirage.getView();
-            final int left = v.getLeft() + ((View) v.getParent()).getLeft();
-            final int top = v.getTop() + ((View) v.getParent()).getTop();
-            mSectionTitleMirage.layout(left,
-                                       top,
-                                       left + mSectionTitleMirage.getMeasuredWidth(),
-                                       top + mSectionTitleMirage.getMeasuredHeight());
-        }
     }
 
     // ======================== manipulating layout parameters ===============================
@@ -479,11 +467,6 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
         }
 
         // 4. measure mirages
-        if (mSectionTitleMirage != null) {
-            measureChild(mSectionTitleMirage,
-                    MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
-                    MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-        }
 
         setMeasuredDimension(width, height);
     }
@@ -651,37 +634,6 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
         return contentWidth;
     }
 
-    public void flipOut(final PanoramaSection v) {
-        final FlipOutAnimation panoramaTitleAnimation = mPanoramaTitleAnimation = new FlipOutAnimation(-getMeasuredWidth()/4, this.getMeasuredHeight()/2);
-        final FlipOutAnimation sectionTitleAnimation = mSectionTitleAnimation = new FlipOutAnimation(-getMeasuredWidth()/4, this.getMeasuredHeight()/2);
-        final FlipOutAnimation contentAnimation = mContentAnimation = new FlipOutAnimation(-getMeasuredWidth()/4, this.getMeasuredHeight()/2);
-        contentAnimation.setAnimationListener(this);
-        final MirageView mv = new MirageView(getContext(), v.getHeader());
-        if (mSectionTitleMirage != null) {
-            // this one is lazy cleaned
-            removeView(mSectionTitleMirage);
-        }
-        mSectionTitleMirage = mv;
-        addView(mSectionTitleMirage);
-        // make sure the original view is measured
-        measure(mLastWidthMeasureSpec, mLastHeightMeasureSpec);
-        mSectionTitleMirage.freeze();
-        mSectionTitleMirage.getView().setVisibility(GONE);
-        mHeader.startAnimation(panoramaTitleAnimation);
-        postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                mSectionTitleMirage.startAnimation(sectionTitleAnimation);
-            }
-        }, 150);
-        postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                v.startAnimation(contentAnimation);
-            }
-        }, 300);
-    }
-
     // =================================== scrolling ======================================
 
     public boolean canScroll() {
@@ -712,27 +664,6 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
         mIsScrollingCache = mScroller.computeScrollOffset();
         mScrollingOffsetCache = mScroller.getCurrX();
         invalidate();
-    }
-
-    @Override
-    public void onAnimationStart(Animation animation) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
-    public void onAnimationEnd(Animation animation) {
-        if (animation == mContentAnimation) {
-            mSectionTitleMirage.unfreeze();
-            final View h = mSectionTitleMirage.getView();
-//            h.setVisibility(VISIBLE);
-        }
-    }
-
-    @Override
-    public void onAnimationRepeat(Animation animation) {
-        // TODO Auto-generated method stub
-        
     }
 
     @Override
