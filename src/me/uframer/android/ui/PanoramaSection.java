@@ -123,7 +123,6 @@ public class PanoramaSection extends ViewGroup {
             tv.setSingleLine(true);
             tv.setHorizontallyScrolling(true);
             tv.setEllipsize(null);
-            // FIXME android sdk does not allow using assets from Library Project, WTF
             tv.setTypeface(mUIContext.semilightTypeface);
             tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, DEFAULT_TITLE_SIZE);
             tv.setPadding(DEFAULT_TITLE_PADDING_LEFT, 0, 0, 0);

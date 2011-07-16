@@ -7,6 +7,18 @@ import android.content.Context;
 import android.graphics.Typeface;
 
 /**
+ * <p>
+ * NOTE: Due to the limits of Android ADK and Microsoft license of Segoe fonts, the user has
+ * to provide the following fonts in their applications assets/fonts/ directory:
+ * <table>
+ * <tr><td>SegoeWP-Black.ttf</td></tr>
+ * <tr><td>SegoeWP-Bold.ttf</td></tr>
+ * <tr><td>SegoeWP-Semibold.ttf</td></tr>
+ * <tr><td>SegoeWP.ttf</td></tr>
+ * <tr><td>SegoeWP-Semilight.ttf</td></tr>
+ * <tr><td>SegoeWP-Light.ttf</td></tr>
+ * </table>
+ * </p>
  * @author jiaoye
  *
  */
