@@ -91,12 +91,18 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
         }
     }
 
+    public static enum HeaderLayoutStyle {
+        BOUNDED,
+        TOWED,
+    }
+
     // header
     private int mCustomHeaderId;
     private View mHeader;
     private String mTitle;
     private int mTitleColor;
     private Drawable mTitleIcon;
+    private HeaderLayoutStyle mHeaderLayoutStyle;
 
     // background
     private Drawable mBackgroundDrawable;
@@ -104,16 +110,12 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
 
     // touching facilities
     private VelocityTracker mVelocityTracker;
-
-    // internal states
     private int mTouchSlop;
     private int mMinimumVelocity;
     private int mMaximumVelocity;
     private int mOverscrollDistance;
     private int mOverflingDistance;
 
-    private int mViewportLeft;
-    private int mOldViewportLeft;
     private boolean mIsBeingDragged;
     private int mActivePointerId;
 
@@ -184,6 +186,8 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
         mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
         mOverscrollDistance = configuration.getScaledOverscrollDistance();
         mOverflingDistance = configuration.getScaledOverflingDistance();
+        mScroller = new Scroller(context);
+        mHeaderLayoutStyle = HeaderLayoutStyle.TOWED;
     }
 
     @Override
@@ -295,31 +299,56 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        final int panoramaWidth = getMeasuredWidth();
-        final int panoramaHeight = getMeasuredHeight();
-        final int contentWidth = getContentWidth();
-        final int headerWidth = mHeader.getMeasuredWidth();
-        final int headerHeight = mHeader.getMeasuredHeight();
-        final int backgroundWidth = mBackground.getMeasuredWidth();
-        final int backgroundHeight = mBackground.getMeasuredHeight();
-        int viewportOffsetX;
+        final float viewportWidth = getMeasuredWidth();
+        final float viewportHeight = getMeasuredHeight();
+        final float contentWidth = getMeasuredContentWidth();
+        final float headerWidth = mHeader.getMeasuredWidth();
+        final float headerHeight = mHeader.getMeasuredHeight();
+        float viewportOffsetX;
+        float viewportLeft;
+
+        // TODO onLayout may be called several times
+        if (mIsScrollingCache) {
+            mIsScrollingCache = mScroller.computeScrollOffset();
+            if (mIsScrollingCache) {
+                mScrollingOffsetCache = mScroller.getCurrX();
+                viewportLeft = mScrollingOffsetCache;
+            }
+            else {
+                viewportLeft = getScrollX();
+            }
+        }
+        else {
+            viewportLeft = getScrollX();
+        }
 
         // 1. layout background layer
         if (mBackground != null) {
-            viewportOffsetX = -mViewportLeft * (backgroundWidth - panoramaWidth) / (contentWidth + DEFAULT_PEEKING_WIDTH - panoramaWidth);
-            mBackground.layout(viewportOffsetX, 0, backgroundWidth + viewportOffsetX, backgroundHeight);
+            float backgroundWidth = mBackground.getMeasuredWidth() * viewportHeight / mBackground.getMeasuredHeight();
+            float backgroundHeight = viewportHeight;
+            viewportOffsetX = viewportLeft * (contentWidth + DEFAULT_PEEKING_WIDTH - backgroundWidth) / (contentWidth + DEFAULT_PEEKING_WIDTH - viewportWidth);
+            mBackground.layout((int) viewportOffsetX, 0, (int)(backgroundWidth + viewportOffsetX), (int)backgroundHeight);
         }
 
         // 2. layout header
-        viewportOffsetX = -mViewportLeft * (headerWidth - panoramaWidth) / (contentWidth - panoramaWidth);
-        mHeader.layout(viewportOffsetX, 0, headerWidth + viewportOffsetX, headerHeight);
+        switch (mHeaderLayoutStyle) {
+        case BOUNDED:
+            viewportOffsetX = viewportLeft * (contentWidth - headerWidth) / (contentWidth - viewportWidth);
+            break;
+        case TOWED:
+            viewportOffsetX = viewportLeft * (contentWidth - viewportWidth + DEFAULT_PEEKING_WIDTH / 2) / contentWidth;
+            break;
+        default:
+            viewportOffsetX = 0;
+        }
+        mHeader.layout((int) viewportOffsetX, 0, (int)(headerWidth + viewportOffsetX), (int)headerHeight);
 
         // 3. layout sections
         int sectionOffsetX = 0;
-        viewportOffsetX = -mViewportLeft;
+        viewportOffsetX = 0;
         for (PanoramaSection ps : mSectionList) {
             final int childWidth = ps.getMeasuredWidth();
-            ps.layout(sectionOffsetX + viewportOffsetX, headerHeight, childWidth + sectionOffsetX + viewportOffsetX, ps.getMeasuredHeight() + headerHeight);
+            ps.layout((int)(sectionOffsetX + viewportOffsetX), (int)headerHeight, (int)(childWidth + sectionOffsetX + viewportOffsetX), (int)(ps.getMeasuredHeight() + headerHeight));
             sectionOffsetX += childWidth;
         }
 
@@ -328,7 +357,7 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
             View v = mSectionTitleMirage.getView();
             final int left = v.getLeft() + ((View) v.getParent()).getLeft();
             final int top = v.getTop() + ((View) v.getParent()).getTop();
-            mSectionTitleMirage.layout(left, 
+            mSectionTitleMirage.layout(left,
                                        top,
                                        left + mSectionTitleMirage.getMeasuredWidth(),
                                        top + mSectionTitleMirage.getMeasuredHeight());
@@ -369,7 +398,6 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
         ViewGroup.LayoutParams lp = getLayoutParams();
         int height = (int) (mDisplayMetrics.heightPixels / mDisplayMetrics.density);
         int width = (int) (mDisplayMetrics.widthPixels / mDisplayMetrics.density);
-        Log.v(LOG_TAG, "Display Metrics Provided: " + height + ", " + width);
 
         // determine height
         switch (heightMode) {
@@ -455,224 +483,165 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
         setMeasuredDimension(width, height);
     }
 
-
     // =========================== processing touch events ==================================
-//    @Override
-//    public boolean onInterceptTouchEvent(MotionEvent ev) {
-//        final int action = ev.getAction();
-//
-//        // Shortcut.
-//        if ((action == MotionEvent.ACTION_MOVE) && (mIsBeingDragged)) {
-//            return true;
-//        }
-//
-//        switch (action & MotionEvent.ACTION_MASK) {
-//        case MotionEvent.ACTION_DOWN: {
-//            final float x = ev.getX();
-//            if (!inPanoramaSection((int) x, (int) ev.getY())) {
-//                mIsBeingDragged = false;
-//                break;
-//            }
-//
-//            /*
-//             * Remember location of down touch.
-//             * ACTION_DOWN always refers to pointer index 0.
-//             */
-//            mLastMotionX = x;
-//            mActivePointerId = ev.getPointerId(0);
-//
-//            /*
-//            * If being flinged and user touches the screen, initiate drag;
-//            * otherwise don't.  mScroller.isFinished should be false when
-//            * being flinged.
-//            */
-////            mIsBeingDragged = !mScroller.isFinished();
-//            break;
-//        }
-//        case MotionEvent.ACTION_MOVE: {
-//            /*
-//             * mIsBeingDragged == false, otherwise the shortcut would have caught it. Check
-//             * whether the user has moved far enough from his original down touch.
-//             */
-//
-//            /*
-//            * Locally do absolute value. mLastMotionX is set to the x value
-//            * of the down event.
-//            */
-//            final int activePointerId = mActivePointerId;
-//            if (activePointerId == INVALID_POINTER) {
-//                // If we don't have a valid id, the touch down wasn't on content.
-//                break;
-//            }
-//
-//            final int pointerIndex = ev.findPointerIndex(activePointerId);
-//            final float x = ev.getX(pointerIndex);
-//            final int xDiff = (int) Math.abs(x - mLastMotionX);
-//            if (xDiff > mTouchSlop) {
-//                mIsBeingDragged = true;
-//                mLastMotionX = x;
-//                final ViewParent parent = getParent();
-//                if (parent != null) parent.requestDisallowInterceptTouchEvent(true);
-//            }
-//            break;
-//        }
-//
-//        case MotionEvent.ACTION_CANCEL:
-//        case MotionEvent.ACTION_UP:
-//            mIsBeingDragged = false;
-//            mActivePointerId = INVALID_POINTER;
-//            break;
-//        case MotionEvent.ACTION_POINTER_UP:
-////            onSecondaryPointerUp(ev);
-//            break;
-//        }
-//
-//        return mIsBeingDragged;
-//    }
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
 
-    private boolean inPanoramaSection(int x, int y) {
-        // TODO Auto-generated method stub
-        return false;
+//        dumpMotionEvent("onInterceptTouchEvent", ev);
+
+        switch (ev.getActionMasked()) {
+        case MotionEvent.ACTION_DOWN:
+            mLastMotionX = ev.getX();
+            mActivePointerId = ev.getPointerId(0);
+            mIsBeingDragged = !mScroller.isFinished();
+            break;
+
+        case MotionEvent.ACTION_MOVE: {
+            if (mIsBeingDragged) {
+                return true;
+            }
+
+            // sanity check in case ACTION_DOWN is missed
+            if (mActivePointerId == INVALID_POINTER) {
+                break;
+            }
+
+            final float x = ev.getX(ev.findPointerIndex(mActivePointerId));
+            final int deltaX = (int) Math.abs(x - mLastMotionX);
+            if (deltaX > mTouchSlop) {
+                mIsBeingDragged = true;
+                mLastMotionX = x;
+                final ViewParent parent = getParent();
+                if (parent != null) {
+                    parent.requestDisallowInterceptTouchEvent(true);
+                }
+            }
+            break;
+        }
+        case MotionEvent.ACTION_CANCEL:
+        case MotionEvent.ACTION_UP:
+            mIsBeingDragged = false;
+            mActivePointerId = INVALID_POINTER;
+            break;
+        case MotionEvent.ACTION_POINTER_UP:
+            // change primary pointer and clear the trace
+            onSecondaryPointerUp(ev);
+            break;
+        }
+
+        return mIsBeingDragged;
     }
 
-//    @Override
-//    public boolean onTouchEvent(MotionEvent ev) {
-//
-//        if (ev.getAction() == MotionEvent.ACTION_DOWN && ev.getEdgeFlags() != 0) {
-//            // Don't handle edge touches immediately -- they may actually belong to one of our
-//            // descendants.
-//           return false;
-//        }
-//
-//        if (mVelocityTracker == null) {
-//            mVelocityTracker = VelocityTracker.obtain();
-//        }
-//        mVelocityTracker.addMovement(ev);
-//
-//        final int action = ev.getAction();
-//
-//        switch (action & MotionEvent.ACTION_MASK) {
-//            case MotionEvent.ACTION_DOWN: {
-//                mIsBeingDragged = getChildCount() != 0;
-//                if (!mIsBeingDragged) {
-//                    return false;
-//                }
-//
-//                /*
-//                 * If being flinged and user touches, stop the fling. isFinished
-//                 * will be false if being flinged.
-//                 */
-////                if (!mScroller.isFinished()) {
-////                    mScroller.abortAnimation();
-////                }
-//
-//                // Remember where the motion event started
-//                mLastMotionX = ev.getX();
-//                mActivePointerId = ev.getPointerId(0);
-//                break;
-//            }
-//            case MotionEvent.ACTION_MOVE:
-//                if (mIsBeingDragged) {
-//                    // Scroll to follow the motion event
-//                    final int activePointerIndex = ev.findPointerIndex(mActivePointerId);
-//                    final float x = ev.getX(activePointerIndex);
-//                    final int deltaX = (int) (mLastMotionX - x);
-//                    mLastMotionX = x;
-//
-////                    final int oldX = mScrollX;
-////                    final int oldY = mScrollY;
-////                    final int range = getScrollRange();
-////                    if (overScrollBy(deltaX, 0, mScrollX, 0, range, 0,
-////                            mOverscrollDistance, 0, true)) {
-////                        // Break our velocity if we hit a scroll barrier.
-////                        mVelocityTracker.clear();
-////                    }
-//                    onScrollChanged(mScrollX, mScrollY, oldX, oldY);
-//
-//                    final int overscrollMode = getOverScrollMode();
-//                    if (overscrollMode == OVER_SCROLL_ALWAYS ||
-//                            (overscrollMode == OVER_SCROLL_IF_CONTENT_SCROLLS && range > 0)) {
-//                        final int pulledToX = oldX + deltaX;
-//                        if (pulledToX < 0) {
-//                            mEdgeGlowLeft.onPull((float) deltaX / getWidth());
-//                            if (!mEdgeGlowRight.isFinished()) {
-//                                mEdgeGlowRight.onRelease();
-//                            }
-//                        } else if (pulledToX > range) {
-//                            mEdgeGlowRight.onPull((float) deltaX / getWidth());
-//                            if (!mEdgeGlowLeft.isFinished()) {
-//                                mEdgeGlowLeft.onRelease();
-//                            }
-//                        }
-//                        if (mEdgeGlowLeft != null
-//                                && (!mEdgeGlowLeft.isFinished() || !mEdgeGlowRight.isFinished())) {
-//                            invalidate();
-//                        }
-//                    }
-//                }
-//                break;
-//            case MotionEvent.ACTION_UP:
-//                if (mIsBeingDragged) {
-//                    final VelocityTracker velocityTracker = mVelocityTracker;
-//                    velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
-//                    int initialVelocity = (int) velocityTracker.getXVelocity(mActivePointerId);
-//
-//                    if (getChildCount() > 0) {
-//                        if ((Math.abs(initialVelocity) > mMinimumVelocity)) {
-//                            fling(-initialVelocity);
-//                        } else {
-//                            final int right = getScrollRange();
-//                            if (mScroller.springBack(mScrollX, mScrollY, 0, right, 0, 0)) {
-//                                invalidate();
-//                            }
-//                        }
-//                    }
-//
-//                    mActivePointerId = INVALID_POINTER;
-//                    mIsBeingDragged = false;
-//
-//                    if (mVelocityTracker != null) {
-//                        mVelocityTracker.recycle();
-//                        mVelocityTracker = null;
-//                    }
-//                    if (mEdgeGlowLeft != null) {
-//                        mEdgeGlowLeft.onRelease();
-//                        mEdgeGlowRight.onRelease();
-//                    }
-//                }
-//                break;
-//            case MotionEvent.ACTION_CANCEL:
-//                if (mIsBeingDragged && getChildCount() > 0) {
-//                    if (mScroller.springBack(mScrollX, mScrollY, 0, getScrollRange(), 0, 0)) {
-//                        invalidate();
-//                    }
-//                    mActivePointerId = INVALID_POINTER;
-//                    mIsBeingDragged = false;
-//                    if (mVelocityTracker != null) {
-//                        mVelocityTracker.recycle();
-//                        mVelocityTracker = null;
-//                    }
-//                    if (mEdgeGlowLeft != null) {
-//                        mEdgeGlowLeft.onRelease();
-//                        mEdgeGlowRight.onRelease();
-//                    }
-//                }
-//                break;
-//            case MotionEvent.ACTION_POINTER_UP:
-//                onSecondaryPointerUp(ev);
-//                break;
-//        }
-//        return true;
-//    }
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+
+//        dumpMotionEvent("onTouchEvent", ev);
+
+        if (ev.getAction() == MotionEvent.ACTION_DOWN && ev.getEdgeFlags() != 0) {
+            // Don't handle edge touches immediately -- they may actually belong to one of our
+            // descendants. (uframer: AbsListView for example)
+           return false;
+        }
+
+        if (mVelocityTracker == null) {
+            mVelocityTracker = VelocityTracker.obtain();
+        }
+        mVelocityTracker.addMovement(ev);
+
+        final boolean canScroll = canScroll();
+
+        switch (ev.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN: {
+                mIsBeingDragged = canScroll;
+                if (!mIsBeingDragged) {
+                    return false;
+                }
+
+                if (!mScroller.isFinished()) {
+                    mScroller.abortAnimation();
+                }
+
+                // Remember where the motion event started
+                mLastMotionX = ev.getX();
+                mActivePointerId = ev.getPointerId(0);
+                break;
+            }
+            case MotionEvent.ACTION_MOVE:
+                if (mIsBeingDragged) {
+                    // Scroll to follow the motion event
+                    final float x = ev.getX(ev.findPointerIndex(mActivePointerId));
+                    final int deltaX = (int) (x - mLastMotionX);
+                    mLastMotionX = x;
+                    super.scrollBy(-deltaX, 0);
+                    //scrollBy(-deltaX);
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                if (mIsBeingDragged) {
+                    mVelocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
+                    int initialVelocity = (int) mVelocityTracker.getXVelocity(mActivePointerId);
+
+                    if (canScroll) {
+                        if ((Math.abs(initialVelocity) > mMinimumVelocity)) {
+                            // TODO trigger animation
+                            fling(initialVelocity);
+                        } else {
+                            invalidate();
+                        }
+                    }
+                    
+                    mActivePointerId = INVALID_POINTER;
+                    mIsBeingDragged = false;
+
+                    if (mVelocityTracker != null) {
+                        mVelocityTracker.recycle();
+                        mVelocityTracker = null;
+                    }
+                }
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                if (mIsBeingDragged && canScroll) {
+                    invalidate();
+                    mActivePointerId = INVALID_POINTER;
+                    mIsBeingDragged = false;
+                    if (mVelocityTracker != null) {
+                        mVelocityTracker.recycle();
+                        mVelocityTracker = null;
+                    }
+                }
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                onSecondaryPointerUp(ev);
+                break;
+        }
+        return true;
+    }
+
+    private void onSecondaryPointerUp(MotionEvent ev) {
+        final int pointerIndex = ev.getActionIndex();
+        final int pointerId = ev.getPointerId(pointerIndex);
+        if (pointerId == mActivePointerId) {
+            final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
+            mActivePointerId = ev.getPointerId(newPointerIndex);
+            mLastMotionX = ev.getX(newPointerIndex);
+            if (mVelocityTracker != null) {
+                mVelocityTracker.clear();
+            }
+        }
+    }
 
     private int getContentWidth() {
-        final int count = getChildCount();
         int contentWidth = 0;
-        for (int i = 2; i < count; ++i) {
-            final View c = getChildAt(i);
-            // there may be temporary views here (MirageView for example)
-            if (c instanceof PanoramaSection)
-                contentWidth += c.getMeasuredWidth();
+        for (PanoramaSection ps : mSectionList) {
+            contentWidth += ps.getWidth();
+        }
+        return contentWidth;
+    }
+
+    private int getMeasuredContentWidth() {
+        int contentWidth = 0;
+        for (PanoramaSection ps : mSectionList) {
+            contentWidth += ps.getMeasuredWidth();
         }
         return contentWidth;
     }
@@ -709,28 +678,35 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
     }
 
     // =================================== scrolling ======================================
+
+    public boolean canScroll() {
+        return getContentWidth() > getWidth();
+    }
+
     @Override
     public void scrollTo(int x, int y) {
-        Log.v(LOG_TAG, "PanoramaView cannot scroll vertically, axis y is ignored");
-        scrollTo(x);
+        super.scrollTo(x, 0);
+        requestLayout();
     }
 
     public void scrollTo(int x) {
-        if (x != mViewportLeft) {
-            mOldViewportLeft = mViewportLeft;
-            mViewportLeft = x;
-            invalidate();
-        }
+        scrollTo(x, 0);
     }
 
     @Override
     public void scrollBy(int x, int y) {
-        Log.v(LOG_TAG, "PanoramaView cannot scroll vertically, axis y is ignored");
-        scrollBy(x);
+        scrollTo(getScrollX() + x, 0);
     }
 
     public void scrollBy(int x) {
-        scrollTo(mViewportLeft + x);
+        scrollBy(x, 0);
+    }
+
+    private void fling(int velocity) {
+        mScroller.fling(getScrollX(), 0, -velocity, 0, 0, Math.max(0, getContentWidth() - getWidth() + DEFAULT_PEEKING_WIDTH), 0, 0);
+        mIsScrollingCache = mScroller.computeScrollOffset();
+        mScrollingOffsetCache = mScroller.getCurrX();
+        invalidate();
     }
 
     @Override
@@ -754,10 +730,67 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
         
     }
 
+    @Override
+    public void computeScroll() {
+        if (mIsScrollingCache) {
+            scrollTo(mScrollingOffsetCache, 0);
+            invalidate();
+        }
+        else {
+        }
+    }
+
     /*
      * i haven't found the usage of this method, put it under surveillance.
      */
     int getSuggestedSectionWidth() {
         return mDisplayMetrics.widthPixels - DEFAULT_PEEKING_WIDTH;
+    }
+
+    public View getHeader() {
+        return mHeader;
+    }
+
+    public HeaderLayoutStyle getHeaderLayoutStyle() {
+        return mHeaderLayoutStyle;
+    }
+
+    public void setHeaderLayoutStyle(HeaderLayoutStyle s) {
+        mHeaderLayoutStyle = s;
+    }
+
+    // ============================= Debug Facilities ===========================
+
+    @SuppressWarnings("unused")
+    private void dumpMotionEvent(String tag, MotionEvent ev) {
+        Log.v(tag, "==================================================");
+        Log.v(tag, "Action:" + Integer.toHexString(ev.getAction()));
+        Log.v(tag, "ActionIndex:" + Integer.toHexString(ev.getActionIndex()));
+        Log.v(tag, "ActionMasked:" + actionToString(ev.getActionMasked()));
+        final int pointerCount = ev.getPointerCount();
+        Log.v(tag, "At time " + ev.getEventTime() + ":");
+        for (int p = 0; p < pointerCount; p++) {
+            Log.v(tag, "  pointer " + ev.getPointerId(p) + ":(" + ev.getX(p) + "," + ev.getY(p) + ")");
+        }
+    }
+
+    private static String actionToString(int action) {
+        switch (action) {
+        case MotionEvent.ACTION_DOWN:
+            return "ACTION_DOWN";
+        case MotionEvent.ACTION_MOVE:
+            return "ACTION_MOVE";
+        case MotionEvent.ACTION_UP:
+            return "ACTION_UP";
+        case MotionEvent.ACTION_CANCEL:
+            return "ACTION_CANCEL";
+        case MotionEvent.ACTION_OUTSIDE:
+            return "ACTION_OUTSIDE";
+        case MotionEvent.ACTION_POINTER_UP:
+            return "ACTION_POINTER_UP";
+        case MotionEvent.ACTION_POINTER_DOWN:
+            return "ACTION_POINTER_DOWN";
+        }
+        return "UNKNOWN";
     }
 }
