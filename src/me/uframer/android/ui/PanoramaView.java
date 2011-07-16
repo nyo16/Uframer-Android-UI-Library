@@ -30,12 +30,18 @@ import android.widget.Scroller;
 import android.widget.TextView;
 
 /**
- * This class provides a horizontal canvas that can exceed the screen limit. 
- * Users can pan or flick horizontally to navigate across the sections. Common section is 
- * slightly narrower than the screen so that users can have a peek at the next
- * page, and this can be used as a visual clue to tell users that there are more
- * contents. Once users navigate across the boundaries of the canvas, the canvas 
- * will wrap back.
+ * <p>
+ * This class provides a horizontal canvas that can exceed the screen limit.
+ * Users can pan or flick horizontally to navigate across the sections. Common
+ * section is slightly narrower than the screen so that users can have a peek at
+ * the next page, and this can be used as a visual clue to tell users that there
+ * are more contents. Once users navigate across the boundaries of the canvas,
+ * the canvas will wrap back.
+ * </p>
+ * <p>
+ * children layout must conforms to:
+ * </p>
+ * <table> <tr> <td>background?</td> <td>header</td> <td>section*</td> <td>mirage*</td> </tr> </table>
  *
  * @author jiaoye
  */
