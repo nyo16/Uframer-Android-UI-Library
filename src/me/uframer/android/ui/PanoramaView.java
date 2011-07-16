@@ -759,6 +759,35 @@ public class PanoramaView extends ViewGroup implements AnimationListener {
         mHeaderLayoutStyle = s;
     }
 
+    // TODO if we keep sections ordered then we can save half of the work
+    PanoramaSection findPreviousSection() {
+        PanoramaSection result = null;
+        int minDistance = Integer.MAX_VALUE;
+        final int viewportLeft = getScrollX();
+        for (PanoramaSection ps : mSectionList) {
+            final int distance = ps.getLeft() - viewportLeft;
+            if (distance > 0 && distance < minDistance) {
+                minDistance = distance;
+                result = ps;
+            }
+        }
+        return result;
+    }
+
+    PanoramaSection findNextSection() {
+        PanoramaSection result = null;
+        int minDistance = Integer.MAX_VALUE;
+        final int viewportLeft = getScrollX();
+        for (PanoramaSection ps : mSectionList) {
+            final int distance = viewportLeft - ps.getLeft();
+            if (distance > 0 && distance < minDistance) {
+                minDistance = distance;
+                result = ps;
+            }
+        }
+        return result;
+    }
+
     // ============================= Debug Facilities ===========================
 
     @SuppressWarnings("unused")
