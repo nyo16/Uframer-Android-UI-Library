@@ -4,20 +4,15 @@
  */
 package me.uframer.android.ui;
 
-import me.uframer.android.ui.PanoramaView.LayoutParams;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.View.MeasureSpec;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -29,6 +24,12 @@ import android.widget.TextView;
 public class PanoramaSection extends ViewGroup {
 
     private static final String LOG_TAG = PanoramaSection.class.toString();
+
+    public static enum SlidingStyle {
+        BOUNDED,
+        TOWED,
+        SYNCED,
+    }
 
     private static final int INVALID_RESOURCE_ID = -1;
 
@@ -43,6 +44,7 @@ public class PanoramaSection extends ViewGroup {
     private int mTitleColor;
     private Drawable mTitleIcon;
     private UIContext mUIContext;
+	private SlidingStyle mSlidingStyle;
 
 
     public PanoramaSection(Context context) {
@@ -70,6 +72,22 @@ public class PanoramaSection extends ViewGroup {
             mTitle = ta.getString(R.styleable.PanoramaSection_title);
             mTitleColor = ta.getColor(R.styleable.PanoramaSection_titleColor, DEFAULT_TITLE_COLOR);
             mTitleIcon = ta.getDrawable(R.styleable.PanoramaSection_icon);
+            String slidingStyle = ta.getString(R.styleable.PanoramaSection_slidingStyle);
+            if (slidingStyle == null) {
+            	mSlidingStyle = SlidingStyle.TOWED;
+            }
+            else if (slidingStyle.equals("bounded")) {
+            	mSlidingStyle = SlidingStyle.BOUNDED;
+            }
+            else if (slidingStyle.equals("towed")) {
+            	mSlidingStyle = SlidingStyle.TOWED;
+            }
+            else if (slidingStyle.equals("synced")) {
+            	mSlidingStyle = SlidingStyle.SYNCED;
+            }
+            else {
+            	throw new Error("invalid sliding style");
+            }
             ta.recycle();
         }
 
@@ -256,5 +274,9 @@ public class PanoramaSection extends ViewGroup {
     public View getHeader() {
         return mHeader;
     }
+
+	public SlidingStyle getSlidingStyle() {
+		return mSlidingStyle;
+	}
 
 }
