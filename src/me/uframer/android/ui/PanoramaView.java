@@ -96,7 +96,7 @@ public class PanoramaView extends ViewGroup {
         }
     }
 
-    public static enum HeaderLayoutStyle {
+    public static enum SlidingStyle {
         BOUNDED,
         TOWED,
         SYNCED,
@@ -108,13 +108,14 @@ public class PanoramaView extends ViewGroup {
         VERTICAL_FILL,
     }
 
+    private SlidingStyle mSlidingStyle;
+
     // header
     private int mCustomHeaderId;
     private View mHeader;
     private String mTitle;
     private int mTitleColor;
     private Drawable mTitleIcon;
-    private HeaderLayoutStyle mHeaderLayoutStyle;
 
     // background
     private Drawable mBackgroundDrawable;
@@ -181,6 +182,23 @@ public class PanoramaView extends ViewGroup {
                 mTitleColor = ta.getColor(R.styleable.PanoramaView_titleColor, DEFAULT_TITLE_COLOR);
                 mTitleIcon = ta.getDrawable(R.styleable.PanoramaView_icon);
                 mBackgroundDrawable = ta.getDrawable(R.styleable.PanoramaView_background);
+                // slidingStyle
+                String slidingStyle = ta.getString(R.styleable.PanoramaView_slidingStyle);
+                if (slidingStyle == null) {
+                    mSlidingStyle = SlidingStyle.TOWED;
+                }
+                else if (slidingStyle.equals("bounded")) {
+                    mSlidingStyle = SlidingStyle.BOUNDED;
+                }
+                else if (slidingStyle.equals("towed")) {
+                    mSlidingStyle = SlidingStyle.TOWED;
+                }
+                else if (slidingStyle.equals("synced")) {
+                    mSlidingStyle = SlidingStyle.SYNCED;
+                }
+                else {
+                    throw new Error("invalid sliding style");
+                }
                 // backgroundScalingStyle
                 String backgroundScalingStyle = ta.getString(R.styleable.PanoramaView_backgroundScalingStyle);
                 if (backgroundScalingStyle == null) {
@@ -212,7 +230,6 @@ public class PanoramaView extends ViewGroup {
         mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
         mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
         mScroller = new Scroller(context);
-        mHeaderLayoutStyle = HeaderLayoutStyle.TOWED;
     }
 
     @Override
@@ -342,7 +359,7 @@ public class PanoramaView extends ViewGroup {
                 mBackgroundHeight = mBackgroundDrawable.getIntrinsicHeight();
             }
             // calculate left edge offset
-            switch (mHeaderLayoutStyle) {
+            switch (mSlidingStyle) {
             case BOUNDED:
                 mBackgroundLeft = (int) (viewportLeft * (contentWidth - headerWidth) / (contentWidth - viewportWidth));
                 break;
@@ -356,7 +373,7 @@ public class PanoramaView extends ViewGroup {
         }
 
         // 2. layout header
-        switch (mHeaderLayoutStyle) {
+        switch (mSlidingStyle) {
         case BOUNDED:
             viewportOffsetX = viewportLeft * (contentWidth - headerWidth) / (contentWidth - viewportWidth);
             break;
@@ -710,12 +727,12 @@ public class PanoramaView extends ViewGroup {
         return mHeader;
     }
 
-    public HeaderLayoutStyle getHeaderLayoutStyle() {
-        return mHeaderLayoutStyle;
+    public SlidingStyle getHeaderLayoutStyle() {
+        return mSlidingStyle;
     }
 
-    public void setHeaderLayoutStyle(HeaderLayoutStyle s) {
-        mHeaderLayoutStyle = s;
+    public void setHeaderLayoutStyle(SlidingStyle s) {
+        mSlidingStyle = s;
     }
 
     // TODO if we keep sections ordered then we can save half of the work

@@ -17,6 +17,7 @@
 		<attr name="customHeader"/>
         <attr name="background" format="reference"/>
         <attr name="backgroundScalingStyle" format="string"/>
+        <attr name="slidingStyle"/>
 	</declare-styleable>
 	<declare-styleable name="PanoramaSection">
 		<attr name="title"/>
