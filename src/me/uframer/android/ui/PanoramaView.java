@@ -38,7 +38,7 @@ import android.widget.TextView;
  * <p>
  * children layout must conforms to:
  * </p>
- * <table> <tr> <td>background?</td> <td>header</td> <td>section*</td> <td>mirage*</td> </tr> </table>
+ * <table> <tr> <td>header</td> <td>section*</td> <td>mirage*</td> </tr> </table>
  *
  * @author jiaoye
  */
