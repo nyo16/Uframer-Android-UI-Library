@@ -5,10 +5,10 @@
 package me.uframer.android.ui;
 
 import java.util.ArrayList;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -59,6 +59,8 @@ public class PanoramaView extends ViewGroup {
     private static final int DEFAULT_TITLE_PADDING_TOP = -70;
     private static final int DEFAULT_TITLE_PADDING_BOTTOM = 11;
     static final int DEFAULT_PEEKING_WIDTH = 48;
+    static final int DEFAULT_BACKGROUND_TRAILING_WIDTH = 210;
+    static final int DEFAULT_HEADER_TRAILING_WIDTH = 24;
 
 
     /**
@@ -103,6 +105,12 @@ public class PanoramaView extends ViewGroup {
         SYNCED,
     }
 
+    public static enum BackgroundScalingStyle {
+        NONE,
+        VERTICAL_STRETCH,
+        VERTICAL_FILL,
+    }
+
     // header
     private int mCustomHeaderId;
     private View mHeader;
@@ -113,7 +121,10 @@ public class PanoramaView extends ViewGroup {
 
     // background
     private Drawable mBackgroundDrawable;
-    private View mBackground;
+    private int mBackgroundLeft;
+    private int mBackgroundWidth;
+    private int mBackgroundHeight;
+    private BackgroundScalingStyle mBackgroundScalingStyle;
 
     // touching facilities
     private VelocityTracker mVelocityTracker;
@@ -175,6 +186,24 @@ public class PanoramaView extends ViewGroup {
                 mTitle = ta.getString(R.styleable.PanoramaView_title);
                 mTitleColor = ta.getColor(R.styleable.PanoramaView_titleColor, DEFAULT_TITLE_COLOR);
                 mTitleIcon = ta.getDrawable(R.styleable.PanoramaView_icon);
+                mBackgroundDrawable = ta.getDrawable(R.styleable.PanoramaView_background);
+                // backgroundScalingStyle
+                String backgroundScalingStyle = ta.getString(R.styleable.PanoramaView_backgroundScalingStyle);
+                if (backgroundScalingStyle == null) {
+                    mBackgroundScalingStyle = BackgroundScalingStyle.VERTICAL_STRETCH;
+                }
+                else if (backgroundScalingStyle.equals("none")) {
+                    mBackgroundScalingStyle = BackgroundScalingStyle.NONE;
+                }
+                else if (backgroundScalingStyle.equals("vertical_fill")) {
+                    mBackgroundScalingStyle = BackgroundScalingStyle.VERTICAL_FILL;
+                }
+                else if (backgroundScalingStyle.equals("vertical_stretch")) {
+                    mBackgroundScalingStyle = BackgroundScalingStyle.VERTICAL_STRETCH;
+                }
+                else {
+                    throw new Error("invalid background scaling style");
+                }
             }
             ta.recycle();
         }
@@ -225,25 +254,6 @@ public class PanoramaView extends ViewGroup {
         // generate a header if no custom header provided
         if (mCustomHeaderId == INVALID_RESOURCE_ID || mHeader == null)
             generateHeader();
-
-        // initialize background
-        mBackgroundDrawable = getBackground();
-        setBackgroundDrawable(null);
-
-        // generate background
-        if (mBackgroundDrawable != null) {
-            generateBackground();
-        }
-    }
-
-    /**
-     * Generate background view.
-     */
-    private void generateBackground() {
-        ImageView iv = new ImageView(getContext());
-        iv.setImageDrawable(mBackgroundDrawable);
-        mBackground = iv;
-        addView(mBackground, 0, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
     }
 
     /**
@@ -322,12 +332,35 @@ public class PanoramaView extends ViewGroup {
             viewportLeft = getScrollX();
         }
 
-        // 1. layout background layer
-        if (mBackground != null) {
-            float backgroundWidth = mBackground.getMeasuredWidth() * viewportHeight / mBackground.getMeasuredHeight();
-            float backgroundHeight = viewportHeight;
-            viewportOffsetX = viewportLeft * (contentWidth + DEFAULT_PEEKING_WIDTH - backgroundWidth) / (contentWidth + DEFAULT_PEEKING_WIDTH - viewportWidth);
-            mBackground.layout((int) viewportOffsetX, 0, (int)(backgroundWidth + viewportOffsetX), (int)backgroundHeight);
+        // 1. layout background
+        if (mBackgroundDrawable != null) {
+            // determine width and height
+            switch (mBackgroundScalingStyle) {
+            case VERTICAL_FILL:
+                mBackgroundWidth = (int) (mBackgroundDrawable.getIntrinsicWidth() * viewportHeight / mBackgroundDrawable.getIntrinsicHeight());
+                mBackgroundHeight = (int) viewportHeight;
+                break;
+            case VERTICAL_STRETCH:
+                mBackgroundWidth = mBackgroundDrawable.getIntrinsicWidth();
+                mBackgroundHeight = (int) viewportHeight;
+                break;
+            case NONE:
+            default:
+                mBackgroundWidth = mBackgroundDrawable.getIntrinsicWidth();
+                mBackgroundHeight = mBackgroundDrawable.getIntrinsicHeight();
+            }
+            // calculate left edge offset
+            switch (mHeaderLayoutStyle) {
+            case BOUNDED:
+                mBackgroundLeft = (int) (viewportLeft * (contentWidth - headerWidth) / (contentWidth - viewportWidth));
+                break;
+            case TOWED:
+                mBackgroundLeft = (int) (viewportLeft * (contentWidth - viewportWidth + DEFAULT_PEEKING_WIDTH - DEFAULT_BACKGROUND_TRAILING_WIDTH) / contentWidth);
+                break;
+            case SYNCED:
+            default:
+                mBackgroundLeft = 0;
+            }
         }
 
         // 2. layout header
@@ -442,21 +475,12 @@ public class PanoramaView extends ViewGroup {
         }
 
         // measure children, we do NOT depend on the order of children
-        // 1. measure background
-        if (mBackground != null) {
-            // scale to fit the height of PanoramaView with aspect ratio maintained
-            measureChild(mBackground,
-                    MeasureSpec.makeMeasureSpec(mBackgroundDrawable.getIntrinsicWidth() * height / mBackgroundDrawable.getIntrinsicHeight(),
-                                                MeasureSpec.EXACTLY),
-                    MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
-        }
-
-        // 2. measure header panel
+        // 1. measure header panel
         measureChild(mHeader,
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
 
-        // 3. measure sections
+        // 2. measure sections
         final int minimumSectionWidth = width - DEFAULT_PEEKING_WIDTH;
         final int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(height - mHeader.getMeasuredHeight(), MeasureSpec.AT_MOST);
         final int childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
@@ -465,7 +489,7 @@ public class PanoramaView extends ViewGroup {
             measureChild(ps, childWidthMeasureSpec, childHeightMeasureSpec);
         }
 
-        // 4. measure mirages
+        // 3. measure mirages
 
         setMeasuredDimension(width, height);
     }
@@ -587,7 +611,7 @@ public class PanoramaView extends ViewGroup {
                             invalidate();
                         }
                     }
-                    
+
                     mActivePointerId = INVALID_POINTER;
                     mIsBeingDragged = false;
 
@@ -626,14 +650,6 @@ public class PanoramaView extends ViewGroup {
                 mVelocityTracker.clear();
             }
         }
-    }
-
-    private int getContentWidth() {
-        int contentWidth = 0;
-        for (PanoramaSection ps : mSectionList) {
-            contentWidth += ps.getWidth();
-        }
-        return contentWidth;
     }
 
     private int getMeasuredContentWidth() {
@@ -686,6 +702,14 @@ public class PanoramaView extends ViewGroup {
         }
     }
 
+    private int getContentWidth() {
+        int contentWidth = 0;
+        for (PanoramaSection ps : mSectionList) {
+            contentWidth += ps.getWidth();
+        }
+        return contentWidth;
+    }
+
     /*
      * i haven't found the usage of this method, put it under surveillance.
      */
@@ -732,6 +756,30 @@ public class PanoramaView extends ViewGroup {
             }
         }
         return result;
+    }
+
+    // TODO add tinting and gauss blurring for background
+    @Override
+    protected void onDraw (Canvas canvas) {
+        if (mBackgroundDrawable != null) {
+            final int viewportLeft = getScrollX();
+            mBackgroundDrawable.setBounds(mBackgroundLeft, 0, mBackgroundLeft + mBackgroundWidth, mBackgroundHeight);
+            mBackgroundDrawable.draw(canvas);
+
+            if (viewportLeft < 0 || mBackgroundLeft < 0) { // wrap to tail
+                mBackgroundDrawable.setBounds(mBackgroundLeft - mBackgroundWidth, 0, mBackgroundLeft, mBackgroundHeight);
+                mBackgroundDrawable.draw(canvas);
+            }
+            else if (viewportLeft > getContentWidth() - getWidth()) { // wrap to head
+                mBackgroundDrawable.setBounds(mBackgroundLeft + mBackgroundWidth, 0, mBackgroundLeft + 2 * mBackgroundWidth, mBackgroundHeight);
+                mBackgroundDrawable.draw(canvas);
+            }
+        }
+    }
+
+    @Override
+    public void setBackgroundDrawable(Drawable d) {
+        super.setBackgroundDrawable(d);
     }
 
     // ============================= Debug Facilities ===========================
