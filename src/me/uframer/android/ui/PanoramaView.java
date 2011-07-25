@@ -738,14 +738,14 @@ public class PanoramaView extends ViewGroup {
 
     @SuppressWarnings("unused")
     private void dumpMotionEvent(String tag, MotionEvent ev) {
-        Log.v(tag, "==================================================");
-        Log.v(tag, "Action:" + Integer.toHexString(ev.getAction()));
-        Log.v(tag, "ActionIndex:" + Integer.toHexString(ev.getActionIndex()));
-        Log.v(tag, "ActionMasked:" + actionToString(ev.getActionMasked()));
+        Log.d(tag, "==================================================");
+        Log.d(tag, "Action:" + Integer.toHexString(ev.getAction()));
+        Log.d(tag, "ActionIndex:" + Integer.toHexString(ev.getActionIndex()));
+        Log.d(tag, "ActionMasked:" + actionToString(ev.getActionMasked()));
         final int pointerCount = ev.getPointerCount();
-        Log.v(tag, "At time " + ev.getEventTime() + ":");
+        Log.d(tag, "At time " + ev.getEventTime() + ":");
         for (int p = 0; p < pointerCount; p++) {
-            Log.v(tag, "  pointer " + ev.getPointerId(p) + ":(" + ev.getX(p) + "," + ev.getY(p) + ")");
+            Log.d(tag, "  pointer " + ev.getPointerId(p) + ":(" + ev.getX(p) + "," + ev.getY(p) + ")");
         }
     }
 
