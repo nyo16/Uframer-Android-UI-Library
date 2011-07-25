@@ -10,7 +10,6 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -22,8 +21,6 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewParent;
-import android.view.animation.Animation;
-import android.view.animation.Animation.AnimationListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Scroller;
@@ -131,14 +128,11 @@ public class PanoramaView extends ViewGroup {
     private int mTouchSlop;
     private int mMinimumVelocity;
     private int mMaximumVelocity;
-    private int mOverscrollDistance;
-    private int mOverflingDistance;
 
     private boolean mIsBeingDragged;
     private int mActivePointerId;
 
     private float mLastMotionX;
-    private float mLastMotionY;
 
     // mirage views are all lazy
     private MirageView mHeaderMirage;
@@ -217,8 +211,6 @@ public class PanoramaView extends ViewGroup {
         mTouchSlop = configuration.getScaledTouchSlop();
         mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
         mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
-        mOverscrollDistance = configuration.getScaledOverscrollDistance();
-        mOverflingDistance = configuration.getScaledOverflingDistance();
         mScroller = new Scroller(context);
         mHeaderLayoutStyle = HeaderLayoutStyle.TOWED;
     }
@@ -584,7 +576,6 @@ public class PanoramaView extends ViewGroup {
                     final int deltaX = (int) (x - mLastMotionX);
                     mLastMotionX = x;
                     super.scrollBy(-deltaX, 0);
-                    //scrollBy(-deltaX);
                 }
                 break;
             case MotionEvent.ACTION_UP:
@@ -697,8 +688,6 @@ public class PanoramaView extends ViewGroup {
         if (mIsScrollingCache) {
             scrollTo(mScrollingOffsetCache, 0);
             invalidate();
-        }
-        else {
         }
     }
 
