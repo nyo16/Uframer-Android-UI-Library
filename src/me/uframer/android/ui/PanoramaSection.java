@@ -35,7 +35,8 @@ public class PanoramaSection extends ViewGroup {
 
     private static final int DEFAULT_TITLE_COLOR = Color.WHITE;
     private static final int DEFAULT_TITLE_SIZE = 48;
-    private static final int DEFAULT_TITLE_PADDING_LEFT = 22;
+    private static final int DEFAULT_TITLE_PADDING_LEFT = 10;
+    private static final int DEFAULT_PADDING_LEFT = 12;
 
     private int mCustomHeaderId;
     private View mHeader;
@@ -95,6 +96,7 @@ public class PanoramaSection extends ViewGroup {
         setWillNotCacheDrawing(false);
         setDrawingCacheEnabled(true);
         mUIContext = UIContext.getUIContext(context);
+		setPadding(DEFAULT_PADDING_LEFT, 0, 0, 0);
     }
 
     @Override
@@ -178,10 +180,10 @@ public class PanoramaSection extends ViewGroup {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        Log.e(LOG_TAG, "right = " + (this.getMeasuredWidth() - getPaddingRight()));
-        mHeader.layout(getPaddingLeft(), getPaddingTop(), this.getMeasuredWidth() - getPaddingRight(), mHeader.getMeasuredHeight() + getPaddingTop());
-        int offsetY = mHeader.getMeasuredHeight() + getPaddingTop();
+	    int offsetY = getPaddingTop();
+        mHeader.layout(getPaddingLeft(), offsetY, mHeader.getMeasuredWidth() + getPaddingLeft(), mHeader.getMeasuredHeight() + offsetY);
         if (mContent != null) {
+            offsetY += mHeader.getMeasuredHeight();
             mContent.layout(getPaddingLeft(), offsetY, mContent.getMeasuredWidth() + getPaddingLeft(), mContent.getMeasuredHeight() + offsetY);
         }
     }
@@ -264,10 +266,9 @@ public class PanoramaSection extends ViewGroup {
 
         // re-measure header or LinearLayout will fail to layout its children correctly (esp. when layout_weight involved)
         measureChild(mHeader,
-                MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(width - getPaddingLeft() - getPaddingRight(), MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
 
-        Log.e(LOG_TAG, "width = " + width);
         setMeasuredDimension(width, height);
     }
 
