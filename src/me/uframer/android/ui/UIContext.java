@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package me.uframer.android.ui;
 
@@ -45,7 +45,7 @@ public class UIContext {
         if (mInstance == null) {
             mInstance = new UIContext(context);
         }
-        
+
         return mInstance;
     }
 }

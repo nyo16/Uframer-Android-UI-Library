@@ -73,7 +73,7 @@ public class PanoramaView extends ViewGroup {
         int sectionWidth = -1;
         
         public LayoutParams(Context c, AttributeSet attrs) {
-            super(c, attrs);            
+            super(c, attrs);
             TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.PanoramaSection);
             // do nothing
             a.recycle();
@@ -226,12 +226,12 @@ public class PanoramaView extends ViewGroup {
             }
             ta.recycle();
         }
-        
+
         setWillNotDraw(false);
         mDisplayMetrics = new DisplayMetrics();
         ((Activity) getContext()).getWindowManager().getDefaultDisplay().getMetrics(mDisplayMetrics);
         mUIContext = UIContext.getUIContext(context);
-        
+
         final ViewConfiguration configuration = ViewConfiguration.get(context);
         mTouchSlop = configuration.getScaledTouchSlop(); // 24
         mMinimumVelocity = configuration.getScaledMinimumFlingVelocity(); // 75
@@ -280,7 +280,7 @@ public class PanoramaView extends ViewGroup {
     }
 
     /**
-     * Generate header panel according to mTitle and mDrawable. The generated 
+     * Generate header panel according to mTitle and mDrawable. The generated
      * header panel will be inserted into PanoramaView as the first child.
      */
     private void generateHeader() {

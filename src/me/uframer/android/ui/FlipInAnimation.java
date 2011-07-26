@@ -11,7 +11,7 @@ public class FlipInAnimation extends Animation {
 
         @Override
         public float getInterpolation(float t) {
-            return (float)(1.0f - (1.0f - t) * (1.0f - t));
+            return (1.0f - (1.0f - t) * (1.0f - t));
         }
     }
 
@@ -24,7 +24,7 @@ public class FlipInAnimation extends Animation {
     private float mPivotY;
     private Camera mCamera;
 
-    public FlipInAnimation(float pivotX, float pivotY) {        
+    public FlipInAnimation(float pivotX, float pivotY) {
         mPivotX = pivotX;
         mPivotY = pivotY;
         setDuration(DURATION);
@@ -41,7 +41,7 @@ public class FlipInAnimation extends Animation {
     protected void applyTransformation(float interpolatedTime, Transformation t) {
 
         final float degrees = FROM_DEGREES + (TO_DEGREES - FROM_DEGREES) * interpolatedTime;
-        final float depthZ = FROM_DEPTH + (TO_DEPTH - FROM_DEPTH) * interpolatedTime;        
+        final float depthZ = FROM_DEPTH + (TO_DEPTH - FROM_DEPTH) * interpolatedTime;
         final float transparency = interpolatedTime;
 
         t.setAlpha(transparency);

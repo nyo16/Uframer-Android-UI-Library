@@ -152,7 +152,7 @@ public class PanoramaSection extends ViewGroup {
             iv = new ImageView(getContext());
             iv.setImageDrawable(mTitleIcon);
         }
-        
+
         if (tv != null && iv != null) {
             LinearLayout ll = new LinearLayout(getContext());
             ll.setOrientation(LinearLayout.HORIZONTAL);

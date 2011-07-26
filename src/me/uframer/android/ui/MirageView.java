@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package me.uframer.android.ui;
 
@@ -133,7 +133,7 @@ class MirageView extends View {
 //
 //        mFrozen = false;
 //    }
-    
+
     View getView() {
 // we don't support inflating from layout
 //        if (mView == null) {

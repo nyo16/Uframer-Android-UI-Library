@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package me.uframer.android.ui;
 
@@ -12,12 +12,12 @@ import android.view.animation.Transformation;
  * <p>
  * This class will flip the view out as if it's a page of book.
  * </p>
- * 
+ *
  * @author jiaoye
  *
  */
 public class FlipOutAnimation extends Animation {
-    
+
     private class Interpolator implements android.view.animation.Interpolator {
         private final float TENSION = 1.0f;
 
@@ -36,7 +36,7 @@ public class FlipOutAnimation extends Animation {
     private float mPivotY;
     private Camera mCamera;
 
-    public FlipOutAnimation(float pivotX, float pivotY) {        
+    public FlipOutAnimation(float pivotX, float pivotY) {
         mPivotX = pivotX;
         mPivotY = pivotY;
     }
@@ -55,7 +55,7 @@ public class FlipOutAnimation extends Animation {
     protected void applyTransformation(float interpolatedTime, Transformation t) {
 
         final float degrees = FROM_DEGREES + (TO_DEGREES - FROM_DEGREES) * interpolatedTime;
-        final float depthZ = FROM_DEPTH + (TO_DEPTH - FROM_DEPTH) * interpolatedTime;        
+        final float depthZ = FROM_DEPTH + (TO_DEPTH - FROM_DEPTH) * interpolatedTime;
         final float transparency = 1.0f - interpolatedTime;
 
         t.setAlpha(transparency);
