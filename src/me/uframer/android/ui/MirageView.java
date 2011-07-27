@@ -44,8 +44,6 @@ class MirageView extends View {
 
     final private View mView;
 
-// we don't support inflating from layout
-//    private int mViewId;
     private Canvas mCanvas;
     private Bitmap mBitmap;
     private boolean mFrozen;
@@ -102,43 +100,7 @@ class MirageView extends View {
         }
     }
 
-// we don't support inflating from layout
-//    /**
-//     * @param context
-//     * @param attrs
-//     */
-//    public MirageView(Context context, AttributeSet attrs) {
-//        super(context, attrs);
-//        initializeMirageView(context, attrs, 0);
-//    }
-//
-//    /**
-//     * @param context
-//     * @param attrs
-//     * @param defStyle
-//     */
-//    public MirageView(Context context, AttributeSet attrs, int defStyle) {
-//        super(context, attrs, defStyle);
-//        initializeMirageView(context, attrs, defStyle);
-//    }
-//
-//
-//    private void initializeMirageView(Context context, AttributeSet attrs, int defStyle) {
-//        // parse attributes
-//        if (attrs != null) {
-//            TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.MirageView, defStyle, 0);
-//            mViewId = ta.getResourceId(R.styleable.MirageView_cloneView, 0);
-//            ta.recycle();
-//        }
-//
-//        mFrozen = false;
-//    }
-
     View getView() {
-// we don't support inflating from layout
-//        if (mView == null) {
-//            mView = ((Activity) getContext()).findViewById(mViewId);
-//        }
         return mView;
     }
 
@@ -167,9 +129,7 @@ class MirageView extends View {
         }
         else {
             canvas.save();
-            // TODO set clipping?
             canvas.clipRect(mClippingRect.left, mClippingRect.top, mClippingRect.right, mClippingRect.bottom);
-            // TODO test this
             canvas.translate(mClippingRect.left, mClippingRect.top);
             getView().draw(canvas);
             canvas.restore();
