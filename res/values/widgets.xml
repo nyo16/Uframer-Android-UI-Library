@@ -7,6 +7,8 @@
 	<attr name="titleColor" format="color"/>
 	<attr name="icon" format="reference"/>
     <attr name="slidingStyle" format="string"/>
+    <attr name="debug" format="string"/>
+    <attr name="demo" format="string"/>
 	<!-- custom header must be the first child -->
 	<attr name="customHeader" format="reference"/>
 
@@ -18,6 +20,8 @@
         <attr name="background" format="reference"/>
         <attr name="backgroundScalingStyle" format="string"/>
         <attr name="slidingStyle"/>
+        <attr name="debug"/>
+        <attr name="demo"/>
 	</declare-styleable>
 	<declare-styleable name="PanoramaSection">
 		<attr name="title"/>

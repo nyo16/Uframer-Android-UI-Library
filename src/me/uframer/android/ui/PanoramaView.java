@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -136,8 +137,9 @@ public class PanoramaView extends ViewGroup {
     private boolean mIsBeingDragged;
     private int mActivePointerId;
 
-    private float mLastMotionX;
-    private float mFirstMotionX;
+    private float mLastMotionX = -1;
+    private float mLastMotionY = -1;
+    private float mFirstMotionX = -1;
 
     // mirage views are all lazy
     private MirageView mHeaderMirage;
@@ -161,6 +163,9 @@ public class PanoramaView extends ViewGroup {
 
     private int mFlingVelocity;
     private PanoramaSection mOriginalSection;
+
+    private boolean mDebugMode;
+    private boolean mDemoMode;
 
     public PanoramaView(Context context) {
         this(context, null, 0);
@@ -223,6 +228,34 @@ public class PanoramaView extends ViewGroup {
                 else {
                     throw new Error("invalid background scaling style");
                 }
+            }
+            // debug
+            String debug = ta.getString(R.styleable.PanoramaView_debug);
+            if (debug == null) {
+                mDebugMode = false;
+            }
+            else if (debug.equals("true")) {
+            	mDebugMode = true;
+            }
+            else if (debug.equals("false")) {
+            	mDebugMode = false;
+            }
+            else {
+                throw new Error("invalid debug mode");
+            }
+            // demo
+            String demo = ta.getString(R.styleable.PanoramaView_demo);
+            if (demo == null) {
+                mDemoMode = false;
+            }
+            else if (demo.equals("true")) {
+            	mDemoMode = true;
+            }
+            else if (demo.equals("false")) {
+            	mDemoMode = false;
+            }
+            else {
+                throw new Error("invalid demo mode");
             }
             ta.recycle();
         }
@@ -565,8 +598,9 @@ public class PanoramaView extends ViewGroup {
     // =========================== processing touch events ==================================
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-
-//        dumpMotionEvent("onInterceptTouchEvent", ev);
+    	if (mDebugMode) {
+    		dumpMotionEvent("onInterceptTouchEvent", ev);
+    	}
 
         switch (ev.getActionMasked()) {
         case MotionEvent.ACTION_DOWN:
@@ -613,8 +647,9 @@ public class PanoramaView extends ViewGroup {
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-
-//        dumpMotionEvent("onTouchEvent", ev);
+    	if (mDebugMode) {
+    		dumpMotionEvent("onTouchEvent", ev);
+    	}
 
         if (ev.getAction() == MotionEvent.ACTION_DOWN && ev.getEdgeFlags() != 0) {
             // Don't handle edge touches immediately -- they may actually belong to one of our
@@ -643,9 +678,11 @@ public class PanoramaView extends ViewGroup {
 
                 // Remember where the motion event started
                 mLastMotionX = ev.getX();
+                mLastMotionY = ev.getY();
                 mFirstMotionX = mLastMotionX;
                 mOriginalSection = findSectionUnderPoint((int) mFirstMotionX);
                 mActivePointerId = ev.getPointerId(0);
+                invalidate();
                 break;
             }
             case MotionEvent.ACTION_MOVE:
@@ -655,6 +692,7 @@ public class PanoramaView extends ViewGroup {
                     final int deltaX = (int) (x - mLastMotionX);
                     scrollBy(-deltaX);
                     mLastMotionX = x;
+                    mLastMotionY = ev.getY(ev.findPointerIndex(mActivePointerId));
                 }
                 break;
             case MotionEvent.ACTION_UP:
@@ -712,6 +750,9 @@ public class PanoramaView extends ViewGroup {
                         mVelocityTracker.recycle();
                         mVelocityTracker = null;
                     }
+
+                    mLastMotionX = -1;
+                    mLastMotionY = -1;
                 }
                 break;
             case MotionEvent.ACTION_CANCEL:
@@ -724,6 +765,8 @@ public class PanoramaView extends ViewGroup {
                         mVelocityTracker = null;
                     }
                 }
+                mLastMotionX = -1;
+                mLastMotionY = -1;
                 break;
             case MotionEvent.ACTION_POINTER_UP:
                 onSecondaryPointerUp(ev);
@@ -739,6 +782,7 @@ public class PanoramaView extends ViewGroup {
             final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
             mActivePointerId = ev.getPointerId(newPointerIndex);
             mLastMotionX = ev.getX(newPointerIndex);
+            mLastMotionY = ev.getY(newPointerIndex);
             if (mVelocityTracker != null) {
                 mVelocityTracker.clear();
             }
@@ -845,6 +889,48 @@ public class PanoramaView extends ViewGroup {
         throw new Error("Failed to find current section");
     }
 
+    @Override
+    public void draw (Canvas canvas) {
+    	super.draw(canvas);
+
+    	if (mDebugMode) {
+    		final int infoBarHeight = 40;
+    		Paint pt = new Paint();
+    		pt.setColor(Color.GREEN);
+    		pt.setStyle(Paint.Style.STROKE);
+    		canvas.drawRect(mBackgroundLeft, getTop(), mBackgroundLeft + mBackgroundWidth - 1.0f, getHeight() - 1.0f, pt);
+    		pt.setColor(Color.YELLOW);
+    		canvas.drawRect(mHeader.getLeft(), mHeader.getTop(), mHeader.getRight() - 1.0f, mHeader.getBottom() - 1.0f, pt);
+    		pt.setColor(Color.RED);
+    		for (PanoramaSection ps : mSectionList) {
+    			canvas.drawRect(ps.getLeft(), ps.getTop(), ps.getRight() - 1.0f, ps.getBottom() - 1.0f, pt);
+    		}
+    		pt.setColor(0xaa000000);
+    		pt.setStyle(Paint.Style.FILL);
+    		pt.setAntiAlias(true);
+    		canvas.drawRect(getScrollX(), getScrollY() + getBottom() - infoBarHeight, getScrollX() + getRight(), getScrollY() + getBottom(), pt);
+    		StringBuilder sb = new StringBuilder();
+    		sb.append("Lv=");
+    		sb.append(getScrollX());
+    		sb.append(" Lh=");
+    		sb.append(mHeader.getLeft());
+    		sb.append(" Lb=");
+    		sb.append(mBackgroundLeft);
+    		pt.setColor(Color.WHITE);
+    		pt.setTextSize(24);
+    		canvas.drawText(sb.toString(), getScrollX() + 10, getScrollY() + getBottom() - 12, pt);
+    	}
+
+    	if (mDemoMode) {
+        	if (mLastMotionX >=0 && mLastMotionY >= 0) {
+            	Paint pt = new Paint();
+            	pt.setColor(0xaaffff00);
+            	pt.setAntiAlias(true);
+            	canvas.drawCircle(getScrollX() + mLastMotionX, getScrollY() + mLastMotionY, 60, pt);
+        	}
+    	}
+    }
+
     // TODO add tinting and gauss blurring for background
     @Override
     protected void onDraw (Canvas canvas) {
@@ -871,7 +957,6 @@ public class PanoramaView extends ViewGroup {
 
     // ============================= Debug Facilities ===========================
 
-    @SuppressWarnings("unused")
     private void dumpMotionEvent(String tag, MotionEvent ev) {
         Log.d(tag, "==================================================");
         Log.d(tag, "Action:" + Integer.toHexString(ev.getAction()));
@@ -903,4 +988,20 @@ public class PanoramaView extends ViewGroup {
         }
         return "UNKNOWN";
     }
+
+	public final boolean isInDebugMode() {
+		return mDebugMode;
+	}
+
+	public final void setDebugMode(boolean m) {
+		mDebugMode = m;
+	}
+
+	public final boolean isInDemoMode() {
+		return mDemoMode;
+	}
+
+	public final void setDemoMode(boolean m) {
+		mDemoMode = m;
+	}
 }
