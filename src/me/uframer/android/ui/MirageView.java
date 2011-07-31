@@ -111,7 +111,6 @@ class MirageView extends View {
         }
         else {
             final View v = getView();
-            v.measure(widthMeasureSpec, heightMeasureSpec);
             constructClippingRect(v.getMeasuredWidth(), v.getMeasuredHeight());
             setMeasuredDimension(mClippingRect.width(), mClippingRect.height());
         }
