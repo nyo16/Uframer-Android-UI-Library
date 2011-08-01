@@ -70,9 +70,9 @@ public class PanoramaView extends ViewGroup {
      *
      */
     public static class LayoutParams extends ViewGroup.LayoutParams {
-        
-        int sectionWidth = -1;
-        
+
+        int sectionWidth = Integer.MIN_VALUE;
+
         public LayoutParams(Context c, AttributeSet attrs) {
             super(c, attrs);
             TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.PanoramaSection);
