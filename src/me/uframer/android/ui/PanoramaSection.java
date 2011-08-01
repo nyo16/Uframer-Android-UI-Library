@@ -36,7 +36,6 @@ public class PanoramaSection extends ViewGroup {
     private static final int DEFAULT_TITLE_COLOR = Color.WHITE;
     private static final int DEFAULT_TITLE_SIZE = 48;
     private static final int DEFAULT_TITLE_PADDING_LEFT = 10;
-    private static final int DEFAULT_PADDING_LEFT = 12;
 
     private int mCustomHeaderId;
     private View mHeader;
@@ -96,7 +95,6 @@ public class PanoramaSection extends ViewGroup {
         setWillNotCacheDrawing(false);
         setDrawingCacheEnabled(true);
         mUIContext = UIContext.getUIContext(context);
-		setPadding(DEFAULT_PADDING_LEFT, 0, 0, 0);
     }
 
     @Override
