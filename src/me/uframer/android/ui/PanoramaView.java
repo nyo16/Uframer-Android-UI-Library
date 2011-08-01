@@ -185,41 +185,42 @@ public class PanoramaView extends ViewGroup {
                 mTitle = ta.getString(R.styleable.PanoramaView_title);
                 mTitleColor = ta.getColor(R.styleable.PanoramaView_titleColor, DEFAULT_TITLE_COLOR);
                 mTitleIcon = ta.getDrawable(R.styleable.PanoramaView_icon);
-                mBackgroundDrawable = ta.getDrawable(R.styleable.PanoramaView_background);
-                // slidingStyle
-                String slidingStyle = ta.getString(R.styleable.PanoramaView_slidingStyle);
-                if (slidingStyle == null) {
-                    mSlidingStyle = SlidingStyle.TOWED;
-                }
-                else if (slidingStyle.equals("bounded")) {
-                    mSlidingStyle = SlidingStyle.BOUNDED;
-                }
-                else if (slidingStyle.equals("towed")) {
-                    mSlidingStyle = SlidingStyle.TOWED;
-                }
-                else if (slidingStyle.equals("synced")) {
-                    mSlidingStyle = SlidingStyle.SYNCED;
-                }
-                else {
-                    throw new Error("invalid sliding style");
-                }
-                // backgroundScalingStyle
-                String backgroundScalingStyle = ta.getString(R.styleable.PanoramaView_backgroundScalingStyle);
-                if (backgroundScalingStyle == null) {
-                    mBackgroundScalingStyle = BackgroundScalingStyle.VERTICAL_STRETCH;
-                }
-                else if (backgroundScalingStyle.equals("none")) {
-                    mBackgroundScalingStyle = BackgroundScalingStyle.NONE;
-                }
-                else if (backgroundScalingStyle.equals("vertical_fill")) {
-                    mBackgroundScalingStyle = BackgroundScalingStyle.VERTICAL_FILL;
-                }
-                else if (backgroundScalingStyle.equals("vertical_stretch")) {
-                    mBackgroundScalingStyle = BackgroundScalingStyle.VERTICAL_STRETCH;
-                }
-                else {
-                    throw new Error("invalid background scaling style");
-                }
+            }
+
+            mBackgroundDrawable = ta.getDrawable(R.styleable.PanoramaView_background);
+            // slidingStyle
+            String slidingStyle = ta.getString(R.styleable.PanoramaView_slidingStyle);
+            if (slidingStyle == null) {
+                mSlidingStyle = SlidingStyle.TOWED;
+            }
+            else if (slidingStyle.equals("bounded")) {
+                mSlidingStyle = SlidingStyle.BOUNDED;
+            }
+            else if (slidingStyle.equals("towed")) {
+                mSlidingStyle = SlidingStyle.TOWED;
+            }
+            else if (slidingStyle.equals("synced")) {
+                mSlidingStyle = SlidingStyle.SYNCED;
+            }
+            else {
+                throw new Error("invalid sliding style");
+            }
+            // backgroundScalingStyle
+            String backgroundScalingStyle = ta.getString(R.styleable.PanoramaView_backgroundScalingStyle);
+            if (backgroundScalingStyle == null) {
+                mBackgroundScalingStyle = BackgroundScalingStyle.VERTICAL_STRETCH;
+            }
+            else if (backgroundScalingStyle.equals("none")) {
+                mBackgroundScalingStyle = BackgroundScalingStyle.NONE;
+            }
+            else if (backgroundScalingStyle.equals("vertical_fill")) {
+                mBackgroundScalingStyle = BackgroundScalingStyle.VERTICAL_FILL;
+            }
+            else if (backgroundScalingStyle.equals("vertical_stretch")) {
+                mBackgroundScalingStyle = BackgroundScalingStyle.VERTICAL_STRETCH;
+            }
+            else {
+                throw new Error("invalid background scaling style");
             }
             // debug
             String debug = ta.getString(R.styleable.PanoramaView_debug);
