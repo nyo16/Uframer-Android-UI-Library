@@ -131,7 +131,6 @@ public class PanoramaView extends ViewGroup {
     // touching facilities
     private VelocityTracker mVelocityTracker;
     private int mTouchSlop;
-    private int mMinimumVelocity;
     private int mMaximumVelocity;
 
     private boolean mIsBeingDragged;
@@ -143,13 +142,6 @@ public class PanoramaView extends ViewGroup {
 
     // mirage views are all lazy
     private MirageView mHeaderMirage;
-    private MirageView mPreviousSectionHeaderMirage;
-    private MirageView mNextSectionHeaderMirage;
-    private MirageView mLastSectionMirage;
-    private MirageView mFirstSectionMirage;
-
-    private int mLastWidthMeasureSpec;
-    private int mLastHeightMeasureSpec;
 
     // the order of items in mSectionList is the same in children list
     private ArrayList<PanoramaSection> mSectionList;
@@ -267,7 +259,6 @@ public class PanoramaView extends ViewGroup {
 
         final ViewConfiguration configuration = ViewConfiguration.get(context);
         mTouchSlop = configuration.getScaledTouchSlop(); // 24
-        mMinimumVelocity = configuration.getScaledMinimumFlingVelocity(); // 75
         mMaximumVelocity = configuration.getScaledMaximumFlingVelocity(); // 6000
         mFlingVelocity = 1500;
         mScroller = new Scroller(context, new Interpolator() {
@@ -514,8 +505,6 @@ public class PanoramaView extends ViewGroup {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         // save measure specs for mirages
-        mLastWidthMeasureSpec = widthMeasureSpec;
-        mLastHeightMeasureSpec = heightMeasureSpec;
         // the metrics of PanoramaView has no relation with its children
         final int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         final int heightMode = MeasureSpec.getMode(heightMeasureSpec);
@@ -844,13 +833,6 @@ public class PanoramaView extends ViewGroup {
             contentWidth += ps.getWidth();
         }
         return contentWidth;
-    }
-
-    /*
-     * i haven't found the usage of this method, put it under surveillance.
-     */
-    int getSuggestedSectionWidth() {
-        return mDisplayMetrics.widthPixels - DEFAULT_PEEKING_WIDTH;
     }
 
     public View getHeader() {
