@@ -334,8 +334,9 @@ public class PanoramaView extends ViewGroup {
             viewportLeft = getScrollX();
         }
 
-        final boolean wrapToTail = viewportLeft < 0;
-        final boolean wrapToHead = viewportLeft > contentWidth - viewportWidth;
+        final int validSectionCount = getValidSectionCount();
+        final boolean wrapToTail = (validSectionCount > 1) && (viewportLeft < 0);
+        final boolean wrapToHead = (validSectionCount > 1) && (viewportLeft > contentWidth - viewportWidth);
 
         // 1. layout background
         if (mBackgroundDrawable != null) {
@@ -757,14 +758,21 @@ public class PanoramaView extends ViewGroup {
                             final int viewportLeft = getScrollX();
                             final int viewportRight = viewportLeft + effectiveViewportWidth;
                             final int distance = (int) (ev.getX(ev.findPointerIndex(mActivePointerId)) - mFirstMotionX);
+                            final int validSectionCount = getValidSectionCount();
+                            final int contentWidth = getContentWidth();
                             if ((Math.abs(initialVelocity) > mFlingVelocity)) { // fling
                                 if (initialVelocity < 0) { // jump to next section
-                                    if (viewportLeft > getContentWidth()-getLastValidSectionWidth()) {
-                                        mIsWrappingToHead = true;
-                                        mLastViewportLeft = viewportLeft;
-                                        mLastHeaderLeft = mHeader.getLeft();
-                                        mLastBackgroundLeft = mBackgroundLeft;
-                                        smoothScrollTo(getContentWidth(), 300);
+                                    if (viewportLeft > contentWidth - getLastValidSectionWidth()) {
+                                    	if (validSectionCount > 1) {
+                                            mIsWrappingToHead = true;
+                                            mLastViewportLeft = viewportLeft;
+                                            mLastHeaderLeft = mHeader.getLeft();
+                                            mLastBackgroundLeft = mBackgroundLeft;
+                                            smoothScrollTo(contentWidth, 300);
+                                    	}
+                                    	else {
+                                    		smoothScrollTo(contentWidth - effectiveViewportWidth, 200);
+                                    	}
                                     }
                                     else {
                                         smoothScrollTo(currentSectionRightEdge, 200);
@@ -802,12 +810,17 @@ public class PanoramaView extends ViewGroup {
                                         smoothScrollTo(currentSectionRightEdge - effectiveViewportWidth - DEFAULT_SECTION_LEFT_MARGIN, 200);
                                     } else if (rlDistance < DEFAULT_TRAPPING_RADIUS
                                                || (distance < 0 && rrDistance < 0)) { // snap to next section
-                                        if (viewportLeft > getContentWidth()-getLastValidSectionWidth()) {
-                                            mIsWrappingToHead = true;
-                                            mLastViewportLeft = viewportLeft;
-                                            mLastHeaderLeft = mHeader.getLeft();
-                                            mLastBackgroundLeft = mBackgroundLeft;
-                                            smoothScrollTo(getContentWidth(), 300);
+                                        if (viewportLeft > contentWidth-getLastValidSectionWidth()) {
+                                        	if (validSectionCount > 1) {
+                                                mIsWrappingToHead = true;
+                                                mLastViewportLeft = viewportLeft;
+                                                mLastHeaderLeft = mHeader.getLeft();
+                                                mLastBackgroundLeft = mBackgroundLeft;
+                                                smoothScrollTo(contentWidth, 300);
+                                        	}
+                                        	else {
+                                        		smoothScrollTo(contentWidth - effectiveViewportWidth, 200);
+                                        	}
                                         }
                                         else {
                                             smoothScrollTo(currentSectionRightEdge, 200);
@@ -829,12 +842,17 @@ public class PanoramaView extends ViewGroup {
                                             smoothScrollTo(currentSectionRightEdge, 200);
                                         }
                                     } else if (distance < -DEFAULT_SCROLLING_TRIGGER) { // snap to next section
-                                        if (viewportLeft > getContentWidth()-getLastValidSectionWidth()) {
-                                            mIsWrappingToHead = true;
-                                            mLastViewportLeft = viewportLeft;
-                                            mLastHeaderLeft = mHeader.getLeft();
-                                            mLastBackgroundLeft = mBackgroundLeft;
-                                            smoothScrollTo(getContentWidth(), 300);
+                                        if (viewportLeft > contentWidth-getLastValidSectionWidth()) {
+                                        	if (validSectionCount > 1) {
+                                                mIsWrappingToHead = true;
+                                                mLastViewportLeft = viewportLeft;
+                                                mLastHeaderLeft = mHeader.getLeft();
+                                                mLastBackgroundLeft = mBackgroundLeft;
+                                                smoothScrollTo(contentWidth, 300);
+                                        	}
+                                        	else {
+                                        		smoothScrollTo(contentWidth - effectiveViewportWidth, 200);
+                                    		}
                                         }
                                         else {
                                             smoothScrollTo(currentSectionRightEdge, 200);
@@ -925,6 +943,15 @@ public class PanoramaView extends ViewGroup {
         return contentWidth;
     }
 
+    private int getValidSectionCount() {
+    	int count = 0;
+    	for (PanoramaSection ps: mSectionList) {
+    		if (ps.getVisibility() != View.GONE) {
+    			count++;
+    		}
+    	}
+    	return count;
+    }
     // =================================== scrolling ======================================
 
     public boolean canScroll() {
