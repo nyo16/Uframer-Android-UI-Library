@@ -719,7 +719,7 @@ public class PanoramaView extends ViewGroup {
                 mLastMotionX = ev.getX();
                 mLastMotionY = ev.getY();
                 mFirstMotionX = mLastMotionX;
-                mOriginalSection = findSectionUnderPoint((int) mFirstMotionX);
+                mOriginalSection = findSectionUnderPoint(getScrollX());
                 mActivePointerId = ev.getPointerId(0);
                 invalidate();
                 break;
@@ -746,6 +746,7 @@ public class PanoramaView extends ViewGroup {
                                 smoothScrollTo(mOriginalSection.getLeft() - DEFAULT_SECTION_LEFT_MARGIN, 200);
                             }
                             else {
+                            	Log.e(LOG_TAG, "original section is null whild flinging back");
                                 smoothScrollTo(0, 200);
                             }
                         }
@@ -839,7 +840,13 @@ public class PanoramaView extends ViewGroup {
                                             smoothScrollTo(currentSectionRightEdge, 200);
                                         }
                                     } else { // jump back to original section
-                                        smoothScrollTo(mOriginalSection.getLeft() - DEFAULT_SECTION_LEFT_MARGIN, 200);
+                                        if (mOriginalSection != null) {
+                                            smoothScrollTo(mOriginalSection.getLeft() - DEFAULT_SECTION_LEFT_MARGIN, 200);
+                                        }
+                                        else {
+                                        	Log.e(LOG_TAG, "original section is null whild snapping back to it");
+                                            smoothScrollTo(0, 200);
+                                        }
                                     }
                                 }
                             }
