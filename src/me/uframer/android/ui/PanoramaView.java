@@ -385,30 +385,35 @@ public class PanoramaView extends ViewGroup {
 
         // 2. layout header
         if (mHeader.getVisibility() != View.GONE) {
-            switch (mSlidingStyle) {
-            case BOUNDED:
-                viewportOffsetX = viewportLeft * (contentWidth - effectiveHeaderWidth) / (contentWidth - viewportWidth) + DEFAULT_HEADER_LEFT_MARGIN;
-                break;
-            case TOWED:
-                if (mIsWrappingToHead) {
-                    final float progress = (viewportLeft - mLastViewportLeft) / (contentWidth - mLastViewportLeft);
-                    viewportOffsetX = mLastHeaderLeft + progress * (DEFAULT_HEADER_LEFT_MARGIN - mLastHeaderLeft);
+        	if (validSectionCount > 0) {
+                switch (mSlidingStyle) {
+                case BOUNDED:
+                    viewportOffsetX = viewportLeft * (contentWidth - effectiveHeaderWidth) / (contentWidth - viewportWidth) + DEFAULT_HEADER_LEFT_MARGIN;
+                    break;
+                case TOWED:
+                    if (mIsWrappingToHead) {
+                        final float progress = (viewportLeft - mLastViewportLeft) / (contentWidth - mLastViewportLeft);
+                        viewportOffsetX = mLastHeaderLeft + progress * (DEFAULT_HEADER_LEFT_MARGIN - mLastHeaderLeft);
+                    }
+                    else if (mIsWrappingToTail) {
+                        final float lastSectionWidth = getLastValidSectionWidth() + DEFAULT_SECTION_LEFT_MARGIN;
+                        final float destinationViewportLeft = -lastSectionWidth;
+                        final float progress = (viewportLeft - mLastViewportLeft) / (destinationViewportLeft - mLastViewportLeft);
+                        final float destination = DEFAULT_HEADER_LEFT_MARGIN + DEFAULT_PEEKING_WIDTH;
+                        viewportOffsetX = mLastHeaderLeft + progress * (destination - mLastHeaderLeft);
+                    }
+                    else {
+                        viewportOffsetX = viewportLeft * (contentWidth - headerWidth + contentWidth / effectiveViewportWidth + 80.0f) / contentWidth + DEFAULT_HEADER_LEFT_MARGIN;
+                    }
+                    break;
+                case SYNCED:
+                default:
+                    viewportOffsetX = 0;
                 }
-                else if (mIsWrappingToTail) {
-                    final float lastSectionWidth = getLastValidSectionWidth() + DEFAULT_SECTION_LEFT_MARGIN;
-                    final float destinationViewportLeft = -lastSectionWidth;
-                    final float progress = (viewportLeft - mLastViewportLeft) / (destinationViewportLeft - mLastViewportLeft);
-                    final float destination = DEFAULT_HEADER_LEFT_MARGIN + DEFAULT_PEEKING_WIDTH;
-                    viewportOffsetX = mLastHeaderLeft + progress * (destination - mLastHeaderLeft);
-                }
-                else {
-                    viewportOffsetX = viewportLeft * (contentWidth - headerWidth + contentWidth / effectiveViewportWidth + 80.0f) / contentWidth + DEFAULT_HEADER_LEFT_MARGIN;
-                }
-                break;
-            case SYNCED:
-            default:
-                viewportOffsetX = 0;
-            }
+        	}
+        	else {
+        		viewportOffsetX = DEFAULT_HEADER_LEFT_MARGIN;
+        	}
             mHeader.layout((int) (viewportOffsetX), 0, (int) (headerWidth + viewportOffsetX), (int) headerHeight);
             viewportOffsetY += headerHeight + DEFAULT_HEADER_BOTTOM_MARGIN;
         }
