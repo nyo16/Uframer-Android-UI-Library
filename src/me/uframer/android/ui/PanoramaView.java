@@ -25,7 +25,6 @@ import android.view.ViewParent;
 import android.view.animation.Interpolator;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Scroller;
 import android.widget.TextView;
 
 /**
@@ -214,13 +213,7 @@ public class PanoramaView extends ViewGroup {
         mTouchSlop = configuration.getScaledTouchSlop(); // 24
         mMaximumVelocity = configuration.getScaledMaximumFlingVelocity(); // 6000
         mFlingVelocity = 1500;
-        mScroller = new Scroller(context, new Interpolator() {
-        	final private double scale = 1 - 1/Math.E;
-        	@Override
-        	public float getInterpolation(float input) {
-        		return (float) ((1-Math.exp(-input)) / scale);
-        	}
-        });
+        mScroller = new Scroller();
     }
 
     @Override
@@ -1004,5 +997,23 @@ public class PanoramaView extends ViewGroup {
                     + viewportLeft + ",slidingStyle="
                     + slidingStyle + "}";
         }
+    }
+
+    private class Scroller extends android.widget.Scroller {
+    	public Scroller() {
+    		super(getContext(), new Interpolator() {
+            	final private double scale = 1 - 1/Math.E;
+            	@Override
+            	public float getInterpolation(float input) {
+            		return (float) ((1-Math.exp(-input)) / scale);
+            	}
+            });
+    	}
+
+    	public boolean computeScrollOffset() {
+    		boolean isAnimating = super.computeScrollOffset();
+    		// TODO calculate layout parameters
+    		return isAnimating;
+    	}
     }
 }
