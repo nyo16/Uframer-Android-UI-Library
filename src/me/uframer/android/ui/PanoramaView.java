@@ -759,7 +759,7 @@ public class PanoramaView extends ViewGroup {
                             final int distance = (int) (ev.getX(ev.findPointerIndex(mActivePointerId)) - mFirstMotionX);
                             if ((Math.abs(initialVelocity) > mFlingVelocity)) { // fling
                                 if (initialVelocity < 0) { // jump to next section
-                                    if (viewportLeft > getContentWidth()-getWidth()) {
+                                    if (viewportLeft > getContentWidth()-getLastValidSectionWidth()) {
                                         mIsWrappingToHead = true;
                                         mLastViewportLeft = viewportLeft;
                                         mLastHeaderLeft = mHeader.getLeft();
@@ -802,7 +802,7 @@ public class PanoramaView extends ViewGroup {
                                         smoothScrollTo(currentSectionRightEdge - effectiveViewportWidth - DEFAULT_SECTION_LEFT_MARGIN, 200);
                                     } else if (rlDistance < DEFAULT_TRAPPING_RADIUS
                                                || (distance < 0 && rrDistance < 0)) { // snap to next section
-                                        if (viewportLeft > getContentWidth()-getWidth()) {
+                                        if (viewportLeft > getContentWidth()-getLastValidSectionWidth()) {
                                             mIsWrappingToHead = true;
                                             mLastViewportLeft = viewportLeft;
                                             mLastHeaderLeft = mHeader.getLeft();
@@ -829,7 +829,7 @@ public class PanoramaView extends ViewGroup {
                                             smoothScrollTo(currentSectionRightEdge, 200);
                                         }
                                     } else if (distance < -DEFAULT_SCROLLING_TRIGGER) { // snap to next section
-                                        if (viewportLeft > getContentWidth()-getWidth()) {
+                                        if (viewportLeft > getContentWidth()-getLastValidSectionWidth()) {
                                             mIsWrappingToHead = true;
                                             mLastViewportLeft = viewportLeft;
                                             mLastHeaderLeft = mHeader.getLeft();
