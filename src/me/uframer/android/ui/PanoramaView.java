@@ -118,6 +118,8 @@ public class PanoramaView extends ViewGroup {
     private boolean mDebugMode;
     private boolean mDemoMode;
 
+    private int mInitialHeaderVisibility;
+
     public PanoramaView(Context context) {
         this(context, null, 0);
     }
@@ -144,9 +146,27 @@ public class PanoramaView extends ViewGroup {
                 mTitle = ta.getString(R.styleable.PanoramaView_title);
                 mTitleColor = ta.getColor(R.styleable.PanoramaView_titleColor, DEFAULT_TITLE_COLOR);
                 mTitleIcon = ta.getDrawable(R.styleable.PanoramaView_icon);
+                // visibility of the default header, custom header's visibility is specified in its xml node
+                String initialHeaderVisibility = ta.getString(R.styleable.PanoramaView_headerVisibility);
+                if (initialHeaderVisibility == null) {
+                    mInitialHeaderVisibility = View.VISIBLE;
+                }
+                else if (initialHeaderVisibility.equals("visible")) {
+                    mInitialHeaderVisibility = View.VISIBLE;
+                }
+                else if (initialHeaderVisibility.equals("invisible")) {
+                    mInitialHeaderVisibility = View.INVISIBLE;
+                }
+                else if (initialHeaderVisibility.equals("gone")) {
+                    mInitialHeaderVisibility = View.GONE;
+                }
+                else {
+                    throw new Error("invalid header visibility");
+                }
             }
 
             mBackgroundDrawable = ta.getDrawable(R.styleable.PanoramaView_background);
+
             // slidingStyle
             String slidingStyle = ta.getString(R.styleable.PanoramaView_slidingStyle);
             if (slidingStyle == null) {
@@ -253,8 +273,10 @@ public class PanoramaView extends ViewGroup {
         }
 
         // generate a header if no custom header provided
-        if (mCustomHeaderId == INVALID_RESOURCE_ID || mHeader == null)
+        if (mCustomHeaderId == INVALID_RESOURCE_ID || mHeader == null) {
             generateHeader();
+            mHeader.setVisibility(mInitialHeaderVisibility);
+        }
 
         mHeaderMirage = new MirageView(getContext(), mHeader);
         addView(mHeaderMirage, mHeader.getLayoutParams());
@@ -385,7 +407,7 @@ public class PanoramaView extends ViewGroup {
 
         // 2. layout header
         if (mHeader.getVisibility() != View.GONE) {
-        	if (validSectionCount > 0) {
+            if (validSectionCount > 0) {
                 switch (mSlidingStyle) {
                 case BOUNDED:
                     viewportOffsetX = viewportLeft * (contentWidth - effectiveHeaderWidth) / (contentWidth - viewportWidth) + DEFAULT_HEADER_LEFT_MARGIN;
@@ -410,10 +432,10 @@ public class PanoramaView extends ViewGroup {
                 default:
                     viewportOffsetX = 0;
                 }
-        	}
-        	else {
-        		viewportOffsetX = DEFAULT_HEADER_LEFT_MARGIN;
-        	}
+            }
+            else {
+                viewportOffsetX = DEFAULT_HEADER_LEFT_MARGIN;
+            }
             mHeader.layout((int) (viewportOffsetX), 0, (int) (headerWidth + viewportOffsetX), (int) headerHeight);
             viewportOffsetY += headerHeight + DEFAULT_HEADER_BOTTOM_MARGIN;
         }
@@ -471,14 +493,14 @@ public class PanoramaView extends ViewGroup {
             } else {
                 for (int i = 0; i < sectionCount; ++i) {
                     final PanoramaSection ps = mSectionList.get(i);
-                	if (ps.getVisibility() != View.GONE) {
+                    if (ps.getVisibility() != View.GONE) {
                         final int childWidth = ps.getMeasuredWidth();
                         ps.layout((int) (sectionOffsetX + viewportOffsetX),
                                   (int) viewportOffsetY,
                                   (int) (childWidth + sectionOffsetX + viewportOffsetX),
                                   (int) (ps.getMeasuredHeight() + viewportOffsetY));
                         sectionOffsetX += childWidth + DEFAULT_SECTION_LEFT_MARGIN;
-                	}
+                    }
                 }
             }
         }
@@ -615,26 +637,30 @@ public class PanoramaView extends ViewGroup {
 
         // measure children, we do NOT depend on the order of children
         // 1. measure header panel
-        measureChild(mHeader,
-                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
-                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+        if (mHeader.getVisibility() != View.GONE) {
+            measureChild(mHeader,
+                    MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+                    MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+        }
 
         // 2. measure sections
-        // TODO: add support for horizontal display
         final int minimumSectionWidth = width - DEFAULT_SECTION_LEFT_MARGIN - DEFAULT_PEEKING_WIDTH;
-        final int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(height - mHeader.getMeasuredHeight() - DEFAULT_HEADER_BOTTOM_MARGIN, MeasureSpec.AT_MOST);
+        final int headerMeasuredHeight = mHeader.getVisibility() == View.GONE ? 0 : mHeader.getMeasuredHeight() + DEFAULT_HEADER_BOTTOM_MARGIN ;
+        final int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(height - headerMeasuredHeight, MeasureSpec.AT_MOST);
         final int childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         for (PanoramaSection ps : mSectionList) {
-        	if (ps.getVisibility() != View.GONE) {
+            if (ps.getVisibility() != View.GONE) {
                 ((PanoramaView.LayoutParams) ps.getLayoutParams()).sectionWidth = minimumSectionWidth;
                 measureChild(ps, childWidthMeasureSpec, childHeightMeasureSpec);
-        	}
+            }
         }
 
         // 3. measure mirages
-        measureChild(mHeaderMirage,
-                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
-                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+        if (mHeader.getVisibility() != View.GONE) {
+            measureChild(mHeaderMirage,
+                    MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+                    MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+        }
 
         setMeasuredDimension(width, height);
     }
@@ -752,7 +778,7 @@ public class PanoramaView extends ViewGroup {
                                 smoothScrollTo(mOriginalSection.getLeft() - DEFAULT_SECTION_LEFT_MARGIN, 200);
                             }
                             else {
-                            	Log.e(LOG_TAG, "original section is null whild flinging back");
+                                Log.e(LOG_TAG, "original section is null whild flinging back");
                                 smoothScrollTo(0, 200);
                             }
                         }
@@ -768,16 +794,16 @@ public class PanoramaView extends ViewGroup {
                             if ((Math.abs(initialVelocity) > mFlingVelocity)) { // fling
                                 if (initialVelocity < 0) { // jump to next section
                                     if (viewportLeft > contentWidth - getLastValidSectionWidth()) {
-                                    	if (validSectionCount > 1) {
+                                        if (validSectionCount > 1) {
                                             mIsWrappingToHead = true;
                                             mLastViewportLeft = viewportLeft;
                                             mLastHeaderLeft = mHeader.getLeft();
                                             mLastBackgroundLeft = mBackgroundLeft;
                                             smoothScrollTo(contentWidth, 300);
-                                    	}
-                                    	else {
-                                    		smoothScrollTo(contentWidth - effectiveViewportWidth, 200);
-                                    	}
+                                        }
+                                        else {
+                                            smoothScrollTo(contentWidth - effectiveViewportWidth, 200);
+                                        }
                                     }
                                     else {
                                         smoothScrollTo(currentSectionRightEdge, 200);
@@ -816,16 +842,16 @@ public class PanoramaView extends ViewGroup {
                                     } else if (rlDistance < DEFAULT_TRAPPING_RADIUS
                                                || (distance < 0 && rrDistance < 0)) { // snap to next section
                                         if (viewportLeft > contentWidth-getLastValidSectionWidth()) {
-                                        	if (validSectionCount > 1) {
+                                            if (validSectionCount > 1) {
                                                 mIsWrappingToHead = true;
                                                 mLastViewportLeft = viewportLeft;
                                                 mLastHeaderLeft = mHeader.getLeft();
                                                 mLastBackgroundLeft = mBackgroundLeft;
                                                 smoothScrollTo(contentWidth, 300);
-                                        	}
-                                        	else {
-                                        		smoothScrollTo(contentWidth - effectiveViewportWidth, 200);
-                                        	}
+                                            }
+                                            else {
+                                                smoothScrollTo(contentWidth - effectiveViewportWidth, 200);
+                                            }
                                         }
                                         else {
                                             smoothScrollTo(currentSectionRightEdge, 200);
@@ -848,16 +874,16 @@ public class PanoramaView extends ViewGroup {
                                         }
                                     } else if (distance < -DEFAULT_SCROLLING_TRIGGER) { // snap to next section
                                         if (viewportLeft > contentWidth-getLastValidSectionWidth()) {
-                                        	if (validSectionCount > 1) {
+                                            if (validSectionCount > 1) {
                                                 mIsWrappingToHead = true;
                                                 mLastViewportLeft = viewportLeft;
                                                 mLastHeaderLeft = mHeader.getLeft();
                                                 mLastBackgroundLeft = mBackgroundLeft;
                                                 smoothScrollTo(contentWidth, 300);
-                                        	}
-                                        	else {
-                                        		smoothScrollTo(contentWidth - effectiveViewportWidth, 200);
-                                    		}
+                                            }
+                                            else {
+                                                smoothScrollTo(contentWidth - effectiveViewportWidth, 200);
+                                            }
                                         }
                                         else {
                                             smoothScrollTo(currentSectionRightEdge, 200);
@@ -867,7 +893,7 @@ public class PanoramaView extends ViewGroup {
                                             smoothScrollTo(mOriginalSection.getLeft() - DEFAULT_SECTION_LEFT_MARGIN, 200);
                                         }
                                         else {
-                                        	Log.e(LOG_TAG, "original section is null whild snapping back to it");
+                                            Log.e(LOG_TAG, "original section is null whild snapping back to it");
                                             smoothScrollTo(0, 200);
                                         }
                                     }
@@ -949,13 +975,13 @@ public class PanoramaView extends ViewGroup {
     }
 
     private int getValidSectionCount() {
-    	int count = 0;
-    	for (PanoramaSection ps: mSectionList) {
-    		if (ps.getVisibility() != View.GONE) {
-    			count++;
-    		}
-    	}
-    	return count;
+        int count = 0;
+        for (PanoramaSection ps: mSectionList) {
+            if (ps.getVisibility() != View.GONE) {
+                count++;
+            }
+        }
+        return count;
     }
     // =================================== scrolling ======================================
 
@@ -1131,29 +1157,29 @@ public class PanoramaView extends ViewGroup {
     }
 
     private int getLastValidSectionWidth() {
-    	return mSectionList.get(getLastValidSectionIndex()).getWidth();
+        return mSectionList.get(getLastValidSectionIndex()).getWidth();
     }
 
     private int getLastValidSectionIndex() {
-    	final int sectionCount = mSectionList.size();
+        final int sectionCount = mSectionList.size();
         int lastValidSectionIndex = sectionCount;
         for (int i = sectionCount - 1; i >= 0; --i) {
-        	if (mSectionList.get(i).getVisibility() != View.GONE) {
-        		lastValidSectionIndex = i;
-        		break;
-        	}
+            if (mSectionList.get(i).getVisibility() != View.GONE) {
+                lastValidSectionIndex = i;
+                break;
+            }
         }
         return lastValidSectionIndex;
     }
 
     private int getFirstValidSectionIndex() {
-    	final int sectionCount = mSectionList.size();
+        final int sectionCount = mSectionList.size();
         int firstValidSectionIndex = 0;
         for (int i = 0; i < sectionCount; ++i) {
-        	if (mSectionList.get(i).getVisibility() != View.GONE) {
-        		firstValidSectionIndex = i;
-        		break;
-        	}
+            if (mSectionList.get(i).getVisibility() != View.GONE) {
+                firstValidSectionIndex = i;
+                break;
+            }
         }
         return firstValidSectionIndex;
     }

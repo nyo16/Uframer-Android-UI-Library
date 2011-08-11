@@ -22,6 +22,7 @@
         <attr name="slidingStyle"/>
         <attr name="debug"/>
         <attr name="demo"/>
+        <attr name="headerVisibility" format="string"/>
 	</declare-styleable>
 	<declare-styleable name="PanoramaSection">
 		<attr name="title"/>
