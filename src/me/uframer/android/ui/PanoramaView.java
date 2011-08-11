@@ -64,55 +64,6 @@ public class PanoramaView extends ViewGroup {
     private static final int DEFAULT_HEADER_RIGHT_MARGIN = 10;
     private static final int DEFAULT_HEADER_BOTTOM_MARGIN = 9;
 
-
-    /**
-     * This class provides width suggestion for panorama section.
-     * @author jiaoye
-     *
-     */
-    public static class LayoutParams extends ViewGroup.LayoutParams {
-
-        int sectionWidth = Integer.MIN_VALUE;
-
-        public LayoutParams(Context c, AttributeSet attrs) {
-            super(c, attrs);
-            TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.PanoramaSection);
-            // do nothing
-            a.recycle();
-        }
-
-        public LayoutParams(int width, int height) {
-            super(width, height);
-        }
-
-        public LayoutParams(int width, int height, boolean useCustomHeader) {
-            super(width, height);
-        }
-
-        public LayoutParams(ViewGroup.LayoutParams p) {
-            super(p);
-        }
-
-        public String toString() {
-            return "PanoramaView.LayoutParams={ width="
-                    + Integer.toString(width) + ", height="
-                    + Integer.toString(height) + ", sectionWidth="
-                    + Integer.toString(sectionWidth) + "}";
-        }
-    }
-
-    public static enum SlidingStyle {
-        BOUNDED,
-        TOWED,
-        SYNCED,
-    }
-
-    public static enum BackgroundScalingStyle {
-        NONE,
-        VERTICAL_STRETCH,
-        VERTICAL_FILL,
-    }
-
     private SlidingStyle mSlidingStyle;
 
     // header
@@ -996,4 +947,62 @@ public class PanoramaView extends ViewGroup {
 	public final void setDemoMode(boolean m) {
 		mDemoMode = m;
 	}
+
+
+	//================================= inner classes =====================================
+
+
+
+    public static enum SlidingStyle {
+        BOUNDED,
+        TOWED,
+        SYNCED,
+    }
+
+    public static enum BackgroundScalingStyle {
+        NONE,
+        VERTICAL_STRETCH,
+        VERTICAL_FILL,
+    }
+
+    /**
+     * This class provides width suggestion for panorama section.
+     * @author jiaoye
+     *
+     */
+    public static class LayoutParams extends ViewGroup.LayoutParams {
+
+        int sectionWidth = Integer.MIN_VALUE;
+        int viewportLeft = Integer.MIN_VALUE;
+		int viewportRight = Integer.MIN_VALUE;
+        PanoramaSection.SlidingStyle slidingStyle = PanoramaSection.SlidingStyle.TOWED;
+
+        public LayoutParams(Context c, AttributeSet attrs) {
+            super(c, attrs);
+            TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.PanoramaSection);
+            // do nothing
+            a.recycle();
+        }
+
+        public LayoutParams(int width, int height) {
+            super(width, height);
+        }
+
+        public LayoutParams(int width, int height, boolean useCustomHeader) {
+            super(width, height);
+        }
+
+        public LayoutParams(ViewGroup.LayoutParams p) {
+            super(p);
+        }
+
+        public String toString() {
+            return "PanoramaView.LayoutParams={ width="
+                    + width + ", height="
+                    + height + ", sectionWidth="
+                    + sectionWidth + ", viewportLeft="
+                    + viewportLeft + ",slidingStyle="
+                    + slidingStyle + "}";
+        }
+    }
 }
