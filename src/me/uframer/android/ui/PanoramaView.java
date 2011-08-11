@@ -365,7 +365,7 @@ public class PanoramaView extends ViewGroup {
                     mBackgroundLeft = (int) (mLastBackgroundLeft + progress * (contentWidth - mBackgroundWidth - mLastBackgroundLeft));
                 }
                 else if (mIsWrappingToTail) {
-                    final float lastSectionWidth = mSectionList.get(mSectionList.size() - 1).getWidth() + DEFAULT_SECTION_LEFT_MARGIN;
+                    final float lastSectionWidth = getLastValidSectionWidth() + DEFAULT_SECTION_LEFT_MARGIN;
                     final float destinationViewportLeft = -lastSectionWidth;
                     final float progress = (viewportLeft - mLastViewportLeft) / (destinationViewportLeft - mLastViewportLeft);
                     float destination = (contentWidth - lastSectionWidth) * (contentWidth - viewportWidth + DEFAULT_PEEKING_WIDTH - DEFAULT_BACKGROUND_TRAILING_WIDTH) / contentWidth;
@@ -394,7 +394,7 @@ public class PanoramaView extends ViewGroup {
                     viewportOffsetX = mLastHeaderLeft + progress * (DEFAULT_HEADER_LEFT_MARGIN - mLastHeaderLeft);
                 }
                 else if (mIsWrappingToTail) {
-                    final float lastSectionWidth = mSectionList.get(mSectionList.size() - 1).getWidth() + DEFAULT_SECTION_LEFT_MARGIN;
+                    final float lastSectionWidth = getLastValidSectionWidth() + DEFAULT_SECTION_LEFT_MARGIN;
                     final float destinationViewportLeft = -lastSectionWidth;
                     final float progress = (viewportLeft - mLastViewportLeft) / (destinationViewportLeft - mLastViewportLeft);
                     final float destination = DEFAULT_HEADER_LEFT_MARGIN + DEFAULT_PEEKING_WIDTH;
@@ -418,19 +418,23 @@ public class PanoramaView extends ViewGroup {
         if (sectionCount > 0) {
             viewportOffsetX = 0;
             // FIXME layout section title according to SlidingStyle
+            // TODO add support for GONE property
             if (wrapToTail) {
                 PanoramaSection ps;
                 int childWidth;
-                for (int i = 0; i < sectionCount - 1; ++i) {
+                final int lastValidSectionIndex = getLastValidSectionIndex();
+                for (int i = 0; i < lastValidSectionIndex - 1; ++i) {
                     ps = mSectionList.get(i);
-                    childWidth = ps.getMeasuredWidth();
-                    ps.layout((int) (sectionOffsetX + viewportOffsetX),
-                              (int) viewportOffsetY,
-                              (int) (childWidth + sectionOffsetX + viewportOffsetX),
-                              (int) (ps.getMeasuredHeight() + viewportOffsetY));
-                    sectionOffsetX += childWidth + DEFAULT_SECTION_LEFT_MARGIN;
+                    if (ps.getVisibility() != View.GONE) {
+                        childWidth = ps.getMeasuredWidth();
+                        ps.layout((int) (sectionOffsetX + viewportOffsetX),
+                                  (int) viewportOffsetY,
+                                  (int) (childWidth + sectionOffsetX + viewportOffsetX),
+                                  (int) (ps.getMeasuredHeight() + viewportOffsetY));
+                        sectionOffsetX += childWidth + DEFAULT_SECTION_LEFT_MARGIN;
+                    }
                 }
-                ps = mSectionList.get(sectionCount - 1);
+                ps = mSectionList.get(lastValidSectionIndex);
                 childWidth = ps.getMeasuredWidth();
                 ps.layout((int) (viewportOffsetX - childWidth),
                           (int) (viewportOffsetY),
@@ -439,17 +443,20 @@ public class PanoramaView extends ViewGroup {
             } else if (wrapToHead) {
                 PanoramaSection ps;
                 int childWidth;
-                sectionOffsetX += mSectionList.get(0).getMeasuredWidth() + DEFAULT_SECTION_LEFT_MARGIN;
-                for (int i = 1; i < sectionCount; ++i) {
+                final int firstValidSectionIndex = getFirstValidSectionIndex();
+                sectionOffsetX += mSectionList.get(firstValidSectionIndex).getMeasuredWidth() + DEFAULT_SECTION_LEFT_MARGIN;
+                for (int i = firstValidSectionIndex + 1; i < sectionCount; ++i) {
                     ps = mSectionList.get(i);
-                    childWidth = ps.getMeasuredWidth();
-                    ps.layout((int) (sectionOffsetX + viewportOffsetX),
-                              (int) viewportOffsetY,
-                              (int) (childWidth + sectionOffsetX + viewportOffsetX),
-                              (int) (ps.getMeasuredHeight() + viewportOffsetY));
-                    sectionOffsetX += childWidth + DEFAULT_SECTION_LEFT_MARGIN;
+                    if (ps.getVisibility() != View.GONE) {
+                        childWidth = ps.getMeasuredWidth();
+                        ps.layout((int) (sectionOffsetX + viewportOffsetX),
+                                  (int) viewportOffsetY,
+                                  (int) (childWidth + sectionOffsetX + viewportOffsetX),
+                                  (int) (ps.getMeasuredHeight() + viewportOffsetY));
+                        sectionOffsetX += childWidth + DEFAULT_SECTION_LEFT_MARGIN;
+                    }
                 }
-                ps = mSectionList.get(0);
+                ps = mSectionList.get(firstValidSectionIndex);
                 childWidth = ps.getMeasuredWidth();
                 ps.layout((int) (sectionOffsetX + viewportOffsetX),
                           (int) (viewportOffsetY),
@@ -458,12 +465,14 @@ public class PanoramaView extends ViewGroup {
             } else {
                 for (int i = 0; i < sectionCount; ++i) {
                     final PanoramaSection ps = mSectionList.get(i);
-                    final int childWidth = ps.getMeasuredWidth();
-                    ps.layout((int) (sectionOffsetX + viewportOffsetX),
-                              (int) viewportOffsetY,
-                              (int) (childWidth + sectionOffsetX + viewportOffsetX),
-                              (int) (ps.getMeasuredHeight() + viewportOffsetY));
-                    sectionOffsetX += childWidth + DEFAULT_SECTION_LEFT_MARGIN;
+                	if (ps.getVisibility() != View.GONE) {
+                        final int childWidth = ps.getMeasuredWidth();
+                        ps.layout((int) (sectionOffsetX + viewportOffsetX),
+                                  (int) viewportOffsetY,
+                                  (int) (childWidth + sectionOffsetX + viewportOffsetX),
+                                  (int) (ps.getMeasuredHeight() + viewportOffsetY));
+                        sectionOffsetX += childWidth + DEFAULT_SECTION_LEFT_MARGIN;
+                	}
                 }
             }
         }
@@ -474,7 +483,7 @@ public class PanoramaView extends ViewGroup {
                 switch (mSlidingStyle) {
                 case TOWED:
                     if (mIsWrappingToTail) {
-                        final float lastSectionWidth = mSectionList.get(mSectionList.size() - 1).getWidth() + DEFAULT_SECTION_LEFT_MARGIN;
+                        final float lastSectionWidth = getLastValidSectionWidth() + DEFAULT_SECTION_LEFT_MARGIN;
                         final float destinationViewportLeft = -lastSectionWidth;
                         final float progress = (viewportLeft - mLastViewportLeft) / (destinationViewportLeft - mLastViewportLeft);
                         float destination = (contentWidth - lastSectionWidth) * (contentWidth - headerWidth + contentWidth / effectiveViewportWidth + 80.0f) / contentWidth + DEFAULT_HEADER_LEFT_MARGIN;
@@ -610,8 +619,10 @@ public class PanoramaView extends ViewGroup {
         final int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(height - mHeader.getMeasuredHeight() - DEFAULT_HEADER_BOTTOM_MARGIN, MeasureSpec.AT_MOST);
         final int childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         for (PanoramaSection ps : mSectionList) {
-            ((PanoramaView.LayoutParams) ps.getLayoutParams()).sectionWidth = minimumSectionWidth;
-            measureChild(ps, childWidthMeasureSpec, childHeightMeasureSpec);
+        	if (ps.getVisibility() != View.GONE) {
+                ((PanoramaView.LayoutParams) ps.getLayoutParams()).sectionWidth = minimumSectionWidth;
+                measureChild(ps, childWidthMeasureSpec, childHeightMeasureSpec);
+        	}
         }
 
         // 3. measure mirages
@@ -763,8 +774,7 @@ public class PanoramaView extends ViewGroup {
                                         mLastViewportLeft = viewportLeft;
                                         mLastHeaderLeft = mHeader.getLeft();
                                         mLastBackgroundLeft = mBackgroundLeft;
-                                        final float lastSectionWidth = mSectionList.get(mSectionList.size() - 1).getWidth() + DEFAULT_SECTION_LEFT_MARGIN;
-                                        smoothScrollTo((int) (-lastSectionWidth), 300);
+                                        smoothScrollTo((int) (-getLastValidSectionWidth() - DEFAULT_SECTION_LEFT_MARGIN), 300);
                                     }
                                     else {
                                         smoothScrollTo(currentSectionLeftEdge, 200);
@@ -781,8 +791,7 @@ public class PanoramaView extends ViewGroup {
                                             mLastViewportLeft = viewportLeft;
                                             mLastHeaderLeft = mHeader.getLeft();
                                             mLastBackgroundLeft = mBackgroundLeft;
-                                            final float lastSectionWidth = mSectionList.get(mSectionList.size() - 1).getWidth() + DEFAULT_SECTION_LEFT_MARGIN;
-                                            smoothScrollTo((int) (-lastSectionWidth), 300);
+                                            smoothScrollTo((int) (-getLastValidSectionWidth() - DEFAULT_SECTION_LEFT_MARGIN), 300);
                                         }
                                         else {
                                             smoothScrollTo(currentSectionLeftEdge, 200);
@@ -813,8 +822,7 @@ public class PanoramaView extends ViewGroup {
                                             mLastViewportLeft = viewportLeft;
                                             mLastHeaderLeft = mHeader.getLeft();
                                             mLastBackgroundLeft = mBackgroundLeft;
-                                            final float lastSectionWidth = mSectionList.get(mSectionList.size() - 1).getWidth() + DEFAULT_SECTION_LEFT_MARGIN;
-                                            smoothScrollTo((int) (-lastSectionWidth), 300);
+                                            smoothScrollTo((int) (-getLastValidSectionWidth() - DEFAULT_SECTION_LEFT_MARGIN), 300);
                                         }
                                         else {
                                             smoothScrollTo(currentSectionRightEdge, 200);
@@ -957,7 +965,7 @@ public class PanoramaView extends ViewGroup {
                 post(new Runnable() {
                     @Override
                     public void run() {
-                        scrollTo(getContentWidth() - mSectionList.get(mSectionList.size() - 1).getWidth() - DEFAULT_SECTION_LEFT_MARGIN);
+                        scrollTo(getContentWidth() - getLastValidSectionWidth() - DEFAULT_SECTION_LEFT_MARGIN);
                         invalidate();
                     }
                 });
@@ -1004,7 +1012,9 @@ public class PanoramaView extends ViewGroup {
         final int viewportLeft = pointerX;
         for (int index = 0; index < count; ++index) {
             final PanoramaSection ps = mSectionList.get(index);
-            if ((ps.getLeft() - DEFAULT_SECTION_LEFT_MARGIN) <= viewportLeft && viewportLeft < ps.getRight()) {
+            if ((ps.getLeft() - DEFAULT_SECTION_LEFT_MARGIN) <= viewportLeft &&
+                viewportLeft < ps.getRight() &&
+                ps.getVisibility() != View.GONE) {
                 return index;
             }
         }
@@ -1079,6 +1089,34 @@ public class PanoramaView extends ViewGroup {
     public void setBackgroundDrawable(Drawable d) {
         mBackgroundDrawable = d;
         invalidate();
+    }
+
+    private int getLastValidSectionWidth() {
+    	return mSectionList.get(getLastValidSectionIndex()).getWidth();
+    }
+
+    private int getLastValidSectionIndex() {
+    	final int sectionCount = mSectionList.size();
+        int lastValidSectionIndex = sectionCount;
+        for (int i = sectionCount - 1; i >= 0; --i) {
+        	if (mSectionList.get(i).getVisibility() != View.GONE) {
+        		lastValidSectionIndex = i;
+        		break;
+        	}
+        }
+        return lastValidSectionIndex;
+    }
+
+    private int getFirstValidSectionIndex() {
+    	final int sectionCount = mSectionList.size();
+        int firstValidSectionIndex = 0;
+        for (int i = 0; i < sectionCount; ++i) {
+        	if (mSectionList.get(i).getVisibility() != View.GONE) {
+        		firstValidSectionIndex = i;
+        		break;
+        	}
+        }
+        return firstValidSectionIndex;
     }
 
     // ============================= Debug Facilities ===========================
